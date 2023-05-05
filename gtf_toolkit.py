@@ -3,6 +3,7 @@ import pandas as pd
 from pybedtools import BedTool
 import os
 import time
+from basics import *
 #from pybedtools import BedTool #we need a new inst
 
 # List of functions in this file and descriptions
@@ -10,7 +11,9 @@ import time
 # Create dictionary
 # This is a class to create a dictionary
 # And allows for easy adding
-class my_dictionary(dict):
+
+## -- Basic Functions -- ##
+""" class my_dictionary(dict):
  
   # __init__ function
   def __init__(self):
@@ -43,10 +46,12 @@ def rna_trans(transcript):
         else:
             RNA = RNA + letter
     
-    return RNA
+    return RNA """
+
+## -- Basic Functions -- ##
 
 # turn gff3 into gtf file
-def gff3_to_gtf(gff3_file, output_name):
+""" def gff3_to_gtf(gff3_file, output_name):
     with open(gff3_file, "r") as gff3, open(output_name, "w") as new:
         for line in gff3:
 
@@ -54,13 +59,13 @@ def gff3_to_gtf(gff3_file, output_name):
             temp_line = temp_line.replace("=", ' "')
             temp_line = temp_line.replace(";", '"; ')
             temp_line = temp_line + '"'
-            new.write(temp_line + "\n")
+            new.write(temp_line + "\n") """
 
 # add a feature that extracts the sequence from the genome
 # Note that lower case letters represent masked regions
 # It only takes a gtf file 
 # BedTools recognizes this
-def add_sequence_legacy(gtf_file, ref_genome, output_name):
+""" def add_sequence_legacy(gtf_file, ref_genome, output_name):
     start_time = time.time()
     
     fasta = ref_genome
@@ -80,10 +85,10 @@ def add_sequence_legacy(gtf_file, ref_genome, output_name):
 
             new.write(temp_line + '; bed_sequence "' + extracted_sequence + '"\n')
 
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- %s seconds ---" % (time.time() - start_time)) """
 
 
-# faster version of the above - less safe and assumes that 
+""" # faster version of the above - less safe and assumes that 
 # lines will correspond to each other i.e. 
 # 1 in gtf = 1 i in the output
 # should be true
@@ -103,11 +108,11 @@ def add_sequence_fast(bed_file, ref_genome):
 
     return seq_list
 
-def add_sequence(bed_file, ref_genome, output_name, attribute_name = "bed_sequence"):
+def add_sequence_gtf(gtf_file, ref_genome, output_name, attribute_name = "bed_sequence"):
     
-    seq_list = add_sequence_fast(bed_file, ref_genome)
+    seq_list = add_sequence_fast(gtf_file, ref_genome)
 
-    with open(bed_file, "r") as bed, open(output_name, "w") as new:
+    with open(gtf_file, "r") as bed, open(output_name, "w") as new:
         
         iter = 1
         
@@ -119,14 +124,32 @@ def add_sequence(bed_file, ref_genome, output_name, attribute_name = "bed_sequen
             new.write(temp_line + '; ' + attribute_name + ' "' + extracted_sequence + '"\n')
 
             iter += 2
+ """
+# we define a new file type, bedseq format
+""" def add_sequence_bed(bed_file, ref_genome, output_name):
 
-# Input gtf file, if sequence exists, this will compare the extracted one (with bedtools) to see if any errors exist in the annotation
+    seq_list = add_sequence_fast(bed_file, ref_genome)
+
+    with open(bed_file, "r") as gtf, open(output_name, "w") as new:
+
+        iter = 1
+
+        for line in gtf:
+            extracted_sequence = seq_list[iter]
+
+            temp_line = line.strip()
+
+            new.write(temp_line + "\t" + extracted_sequence + "\n")
+
+            iter += 2 """
+
+""" # Input gtf file, if sequence exists, this will compare the extracted one (with bedtools) to see if any errors exist in the annotation
 def compare_sequence(gtf_file, output_name, sequence_feature1, sequence_feature2):
     # store data in here
 
     convert_df = []
 
-    with open(gtf_file, "r") as gtf, open(output_name, "w") as metrics:
+    with open(gtf_file, "r") as gtf:
         for line in gtf:
             temp_line = line
             # split
@@ -159,12 +182,14 @@ def compare_sequence(gtf_file, output_name, sequence_feature1, sequence_feature2
             temp_data = [temp_line.strip(), dist, seq1, seq2]
             convert_df.append(temp_data)
     df_for_output = pd.DataFrame(convert_df)
-    df_for_output.to_csv(output_name)
+    df_for_output.to_csv(output_name) """
 
 # Next, we want to turn a tsv file to a gtf
 # We need to provide a list that refers to elements of a gtf
 # In the tsv
-extract_list = [12, "snoDB2023", "transcript_ID", 13, 14, ".", 15, ".",]
+
+
+""" extract_list = [12, "snoDB2023", "transcript_ID", 13, 14, ".", 15, ".",]
 
 def tsv_to_gtf(tsv, out_name, extract_list):
     with open(tsv, "r") as tsv_file, open(out_name, "w") as new_file:
@@ -182,11 +207,11 @@ def tsv_to_gtf(tsv, out_name, extract_list):
             extract_list[2], features[extract_list[3]], 
             features[extract_list[4]], extract_list[5], features[extract_list[6]], 
             extract_list[7], "; ".join(['biotype "snoRNA"', ("sequence " + '"' + str(features[22]) + '"'),
-            ("transcript_id " + '"' + str(features[0]) + '/' + str(features[16]) + '"')])]) + "\n")
+            ("transcript_id " + '"' + str(features[0]) + '/' + str(features[16]) + '"')])]) + "\n") """
 
 # Combines reference genomes with
 # Different chr aliases
-def ref_combine(fa1_name, fa2_name, out_name, reference):
+""" def ref_combine(fa1_name, fa2_name, out_name, reference):
     
     reference_nomen = pd.read_csv(reference, sep = "\t")
     reference_nomen["Source"] = ""
@@ -280,33 +305,87 @@ def ref_combine(fa1_name, fa2_name, out_name, reference):
                     continue
 
     # Extract the informational file
-    reference_nomen.to_csv("merge_info.csv")
+    reference_nomen.to_csv("merge_info.csv") """
 
-# Standardize gtf chr names
+""" # Standardize gtf chr names
 # When different chr aliases are used
 def gtf_naming_stan(gtf_file, reference, out_name):
     reference_nomen = pd.read_csv(reference, sep = "\t")
 
+    num_columns = len(reference_nomen.columns)
+
     with open(gtf_file, "r") as gtf, open(out_name, "w") as new:
+        
         for line in gtf:
+            
             modify_line = line.split(sep = "\t")
 
             chromosome_name = modify_line[0]
 
-            for column in reference_nomen:
-                if chromosome_name in list(reference_nomen[column]):
-                    index_num = reference_nomen.index[reference_nomen[column] == chromosome_name].to_list()[0]
+            chr_not_found = True
+
+            while chr_not_found == True:
+                for column in reference_nomen:
+                    if chromosome_name in list(reference_nomen[column]):
+                        index_num = reference_nomen.index[reference_nomen[column] == chromosome_name].to_list()[0]
+                        chr_not_found = False
+                        break
+                    else:
+                        continue
+
+                if chr_not_found == False:
                     break
-                else:
-                    continue
+                elif chr_not_found == True:
+                    raise ValueError(chromosome_name + " not in alaias!")
 
             modify_line[0] = reference_nomen.iloc[index_num, 0]
-            new.write("\t".join(modify_line))
-            print("\t".join(modify_line))
+            new.write("\t".join(modify_line)) """
 
+# commented out 
+# This is a quick script that users can use if their 
+# chromosome names have been altered and needs 
+# modification before replacement
+""" def gtf_naming_stan_temp(gtf_file, reference, out_name):
+    reference_nomen = pd.read_csv(reference, sep = "\t")
+
+    with open(gtf_file, "r") as gtf, open(out_name, "w") as new:
+        
+        for line in gtf:
+            
+            modify_line = line.split(sep = "\t")
+
+            chromosome_name = modify_line[0]
+
+            if "CHR_" in chromosome_name:
+                split = chromosome_name.split(sep = "_")
+                joining = split[1:]
+
+                chromosome_name = "_".join(joining)
+
+            chr_not_found = True
+
+            while chr_not_found == True:
+                for column in reference_nomen:
+                    if chromosome_name in list(reference_nomen[column]):
+                        index_num = reference_nomen.index[reference_nomen[column] == chromosome_name].to_list()[0]
+                        chr_not_found = False
+                        break
+                    else:
+                        continue
+
+                if chr_not_found == False:
+                    break
+                elif chr_not_found == True:
+                    raise ValueError(chromosome_name + " not in alaias!")
+
+            modify_line[0] = reference_nomen.iloc[index_num, 0]
+            new.write("\t".join(modify_line)) """
+
+
+#gtf_naming_stan_temp("testing_env/final/homo_sapies.GRCh38.gtf", "testing_env/hg38.chromAlias.txt", "RC_Fixed_Chr.gtf")
 
 # Change bed to gtf loci format
-def zero_to_one(gtf_file, out_name):
+""" def zero_to_one(gtf_file, out_name):
     with open(gtf_file, "r") as gtf, open(out_name, "w") as new:
         for line in gtf:
             modify_line = line.split(sep="\t")
@@ -325,20 +404,20 @@ def one_to_zero(gtf_file, out_name):
             modify_line[3] = modify_line[3] - 1
             modify_line[3] = str(modify_line[3])
 
-            new.write("\t".join(modify_line))
+            new.write("\t".join(modify_line)) """
 
-# Modify the exon value to something else
+""" # Modify the exon value to something else
 def gtf_change_middle(gtf_file, out_name, change_value):
     with open(gtf_file, "r") as gtf, open(out_name, "w") as new:
         for line in gtf:
             modify_line = line.split(sep="\t")
             modify_line[2] = str(change_value)
 
-            new.write("\t".join(modify_line))
+            new.write("\t".join(modify_line)) """
 
 # Filter by attribute
 # Will take out whatever attribute you put in
-def filter_gtf(input_gtf, output_name, filter_by, value, skip = False, num = 1):
+""" def filter_gtf(input_gtf, output_name, filter_by, value, skip = False, num = 1):
     with open(input_gtf, "r") as annotation, open(output_name, "w") as new:
         # skip n number of lines
         iter = 1
@@ -366,11 +445,11 @@ def filter_gtf(input_gtf, output_name, filter_by, value, skip = False, num = 1):
             if type_feature == value:
                 continue
             else: 
-                new.write(line)
+                new.write(line) """
 
 # Will filter by a column
 # 0 index
-def select_column(input_gtf, output_name, col_number, value):
+""" def select_column(input_gtf, output_name, col_number, value):
     with open(input_gtf, "r") as gtf, open(output_name, "w") as new:
         for line in gtf:
             sep = line.split(sep = "\t")
@@ -390,10 +469,10 @@ def filter_column(input_gtf, output_name, col_number, value):
                 continue
 
             else:
-                new.write(line)
+                new.write(line) """
 
 # Count the number of times a certain field appears
-def countby_field(input_gtf, output_name, field_index):
+""" def countby_field(input_gtf, output_name, field_index):
     
     return_data = my_dictionary()
     
@@ -407,10 +486,10 @@ def countby_field(input_gtf, output_name, field_index):
             
             return_data[value] += 1
         
-        new.write(str(return_data))
+        new.write(str(return_data)) """
 
 # Count the number of times a certain attribute appears 
-def countby_attribute(input_gtf, output_name, countby_value, skip = False, num = 1):
+""" def countby_attribute(input_gtf, output_name, countby_value, skip = False, num = 1):
     
     return_data = my_dictionary()
 
@@ -442,13 +521,13 @@ def countby_attribute(input_gtf, output_name, countby_value, skip = False, num =
 
             return_data[type_feature] += 1
 
-        new.write(str(return_data))
+        new.write(str(return_data)) """
 
 
 # Merges overlapping sequences
 # Able to be offset by a certain amount to extend to regions
 # And clusters
-def merge_overlaps(gtf_file, output_tsv, output_gtf, offset):
+""" def merge_overlaps(gtf_file, output_tsv, output_gtf, offset):
     # Assume gtf format
     column_names = ["chr", "source", "feature", "start", "end", "score", "strand", "frame", "attributes"]
     gtf_data = pd.read_csv(gtf_file, sep = "\t", names = column_names)
@@ -705,9 +784,9 @@ def merge_overlaps(gtf_file, output_tsv, output_gtf, offset):
 
                         i += 1
 
-    return [stored_data]
+    return [stored_data] """
 
-# This requires HISAT2 to be installed and a index to be built
+""" # This requires HISAT2 to be installed and a index to be built
 # Obtains transcript-copy-id which marks different locations in genome
 def align_hisat(gtf_file, output_gtf, index_name):
     with open(gtf_file, "r") as gtf, open("extracted_seq.fa", "w") as new:
@@ -823,13 +902,13 @@ def align_hisat(gtf_file, output_gtf, index_name):
                             biotype + '"')
                 feature_list = [chromosome, database, seq_type, start_loci, end_loci, ".", strand, ".", attributes]
 
-                new.write("\t".join(feature_list) + "\n")
+                new.write("\t".join(feature_list) + "\n") """
 
 # This function will take a gtf file and assign
 # biotype of a transcript based upon the origin database.
 # It will do this given a key
 # It should also reorder
-def key_biotype_gtf(gtf_file, gtf_output, a_dict):
+""" def key_biotype_gtf(gtf_file, gtf_output, a_dict):
     with open(gtf_file, "r") as gtf, open(gtf_output, "w") as new:
         for line in gtf:
             sep_line = line.split(sep = "\t")
@@ -873,8 +952,8 @@ def key_biotype_gtf(gtf_file, gtf_output, a_dict):
                         "sequence " + seq + "; ", "biotype " + biotype ]
 
             new.write("\t".join(sep_line[0:8] + ["".join(final_entry)]) + "\n")
-
-# Given a gtf file and a dictionary that gives attribute identifier
+ """
+""" # Given a gtf file and a dictionary that gives attribute identifier
 # relationships
 # i.e. {"name":"transcript_id"}
 # Add copy ID with HISAT
@@ -921,10 +1000,47 @@ def standardize_attributes(gtf_file, gtf_output, a_dict):
             
             new.write("\t".join(sep_line) + "\n")
 
-    return gtf_output
+    return gtf_output """
+
+#def sequence_length(gtf, field):
+
+""" def gtf_to_bed(gtf, outputname, attribute_to_name = False):
+    with open(gtf, "r") as gtf, open(outputname, "w") as new:
+        for line in gtf:
+            modify_line = line.split(sep="\t")
+            modify_line[3] = int(modify_line[3])
+            modify_line[3] = modify_line[3] - 1
+            modify_line[3] = str(modify_line[3])
+
+            bed_line = []
+
+            bed_line.append(modify_line[0])
+            bed_line.append(modify_line[3])
+            bed_line.append(modify_line[4])
+            # obtain name info
+            if attribute_to_name != False:
+                attributes = modify_line[8].split(sep = ";")
+                # strip
+                attributes = list(map(str.strip, attributes))
+                # combine
+                attributes_split = [item.split(sep = " ") for item in attributes]
+                # combine
+                attributes_split = sum(attributes_split, [])
+                index_id = attributes_split.index(attribute_to_name)
+                bed_line.append(attributes_split[index_id + 1])
+            else:
+                bed_line.append(".")
+            # add the length of sequence here later
+            bed_line.append(".")
+            bed_line.append(modify_line[6])
 
 
-                
+            new.write("\t".join(bed_line) + "\n") """
+
+# extract info from a gtf file into a tsv for downstream analysis
+#def gtf_to_tsv(gtf_file, output_name, dict_extract):
+
+
 
 #===Working Playground===#
 #biotype_cov = {"pirnadb_v1_7_6":"piRNA", "UCSC":"rRNA", "GtRNAdb_v2_0":"tRNA_full", "miRBase_v22_1_mature_miRNA":"miRNA"}
@@ -951,10 +1067,28 @@ def standardize_attributes(gtf_file, gtf_output, a_dict):
 
 # pre miRNA processing
 
-the_gtf = "hsa-pre-miRNA.gtf"
+#the_gtf = "hsa-pre-miRNA.gtf"
 
 #standardize_attributes(the_gtf, "new.gtf", {"Name":"transcript_id"})
 #add_sequence("new.gtf", "hg38_complete.fa", "new_seq.gtf", "sequence")
 #key_biotype_gtf("new_seq.gtf", "hsa-pre_miRNA.gtf", {".":"pre_miRNA"})
 #align_hisat("hsa-pre_miRNA.gtf", "hsa_pre_miRNA.gtf", "hg38comp")
-add_sequence("hsa_pre_miRNA.gtf", "hg38_complete.fa", "hsa_pre_miRNA_final.gtf")
+#add_sequence("hsa_pre_miRNA.gtf", "hg38_complete.fa", "hsa_pre_miRNA_final.gtf")
+
+#standardize_attributes("SPRMT_merge_031323_seq.gtf", "SPRMT_merge_031323_seq_manatee.gtf", {"transcript_copy_id":"gene_id","transcript_id":"gene_name","biotype":"gene_biotype"})
+
+# Generate unique sequences
+#select_column("RC_Fixed_Chr.gtf", "RNA_Central_NCexons.gtf", 2, "noncoding_exon")
+#gtf_to_bed("RNA_Central_NCexons.gtf", "RNA_Central_NCexons.bed")
+#add_sequence_bed("RNA_Central_NCexons.bed", "testing_env/hg38_complete.fa", "RNA_Central.bedseq")
+
+
+# add_sequence("RNA_Central_NCexons.gtf", "testing_env/hg38_complete.fa", "RC_NCexons_Seqs.gtf", "sequence")
+
+#import 
+
+# tRNA fragments
+# gtf_naming_stan("testing_env/human_tRNA_derived.gtf", "testing_env/hg38.chromAlias.txt", "tRNA_derived_chr.gtf")
+#zero_to_one("tRNA_derived_chr.gtf", "tRNA_coord_fix.gtf")
+#add_sequence_gtf("tRNA_coord_fix.gtf", "testing_env/hg38_complete.fa", "tRNA_derived_seq.gtf", "bed_sequence")
+#compare_sequence("tRNA_derived_seq.gtf", "trna_check.csv", "sequence", "bed_sequence")

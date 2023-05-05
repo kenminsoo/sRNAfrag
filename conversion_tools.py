@@ -1,0 +1,273 @@
+from basics import *
+
+# Description:
+# Functions that works to convert files from one file type or indexing system to another.
+# GFF3 to GTF
+# TSV to GTF
+# Zero to One Index
+# One to Zero Index
+# GTF to BED
+
+# turn gff3 into gtf file
+def gff3_to_gtf(gff3_file, output_name):
+    with open(gff3_file, "r") as gff3, open(output_name, "w") as new:
+        for line in gff3:
+
+            temp_line = line.strip()
+            temp_line = temp_line.replace("=", ' "')
+            temp_line = temp_line.replace(";", '"; ')
+            temp_line = temp_line + '"'
+            new.write(temp_line + "\n")
+
+# tsv to gtf
+# The TSV file have the following:
+# Chromsome number
+# A database source
+# Name of the third column
+# Start
+# End
+# na
+# strand
+# na
+# attributes as a list using another dictionary of key:value
+
+# the default dictionary for a query
+extract_dictionary = {"chr":0, 
+                      "source":"", 
+                      "feature":"", 
+                      "start":0, 
+                      "end":0, 
+                      "score":".", 
+                      "strand":0, 
+                      "frame":".", 
+                      "attributes":my_dictionary()}
+
+def tsv_to_gtf(tsv, out_name, extract_dictionary=extract_dictionary, fill_dict = True, skip_lines = 1, header = True, csv = False):
+    with open(tsv, "r") as tsv_file, open(out_name, "w") as new_file:
+        
+        # fill the extraction dictionary
+        if fill_dict == True:
+            # keep track of what we can find in the tsv
+            binary_dictionary = {"chr":False, 
+                      "source":False, 
+                      "feature":False, 
+                      "start":False, 
+                      "end":False, 
+                      "score":True, 
+                      "strand":False, 
+                      "frame":True, 
+                      "attributes":False}
+            # first look through the header 
+            if header == True:
+                header_row = tsv_file.readline().strip()
+
+                # Allow for csv files to be used as well
+                if csv == False:
+                    header_split = header_row.split(sep = "\t")
+                elif csv == True:
+                    header_split = header_row.split(sep = ",")
+
+                header_split = [x.lower() for x in header_split]
+
+                # automatically fill if we can find a matching index in the 
+                # tsv file
+                for key in binary_dictionary:
+                    if binary_dictionary[key] == True:
+                        continue
+                    else:
+                        # try to find an index where it exists
+                        try:
+                            header_split.index(key)
+                        except:
+                            binary_dictionary[key] == False
+                        else:
+                            extract_dictionary[key] = header_split.index(key)
+                            binary_dictionary[key] = True
+
+            # now have the user identify what columns they want
+            # to use to fill in the sttributes of the
+            # gtf file
+
+            for key in binary_dictionary:
+                
+                # add attributes differently
+                if key == "attributes":
+                    attribute_complete = False
+
+                    while attribute_complete == False:
+                        print("--- Addition of Attributes (Features in the final column of gtf file) ---")
+
+                        print("Add your gtf attributes:")
+
+                        print("Add the attribute name")
+                        attribute_name = input("String, no space: ")
+
+
+                        print("Pick either a column (index) or a constant string value.")
+                        attribute_value = input("please input column integer or constant string (NO NUMERIC):")
+                        # convert to numeric if is a column index
+                        try:
+                            int(attribute_value)
+                        except:
+                            attribute_value = attribute_value
+                        else:
+                            attribute_value = int(attribute_value)
+                        
+                        extract_dictionary[key].add(attribute_name, attribute_value)
+
+                        print("Would you like to add more attributes?")
+                        valueok = input("y/n: ")
+
+                        if valueok.strip() in ["y", "yes", "Y", "Yes"]:
+                            continue
+                        else:
+                            print("Are you sure you're done?")
+                            trulyok = input("y/n :")
+                            if trulyok.strip().lower() in ["y", "ye", "yes"]:
+                                attribute_complete = True
+                            else:
+                                attribute_complete = False
+                                
+                elif binary_dictionary[key] == True:
+                    print(key + ": The column or value to be Used: " + str(extract_dictionary[key]))
+                    if type(extract_dictionary[key]) == int:
+                        print("name in tsv: " + header_split[extract_dictionary[key]])
+                    valueok = input("Is this Ok? y/n: ")
+
+                    if valueok.strip() in ["y", "yes", "Y", "Yes"]:
+                        continue
+                    # if userwants to change, then allow for change
+                    else:
+                        print("This is the " + key + " column")
+                        print("What would you like to change it to?")
+                        print("Pick either a column (index) or a constant string value.")
+
+                        if header == True:
+                            i = 0 
+                            for item in header_split:
+                                print(str(i) + " :" + item)
+                                i += 1
+                            extract_dictionary[key] = input("please input column integer or constant string (NO NUMERIC): ")
+    
+                        # now convert to integer if it is one
+                        try:
+                            int(extract_dictionary[key])
+                        except:
+                            binary_dictionary[key] == True
+                        else:
+                            extract_dictionary[key] = int(extract_dictionary[key])
+                            binary_dictionary[key] == True
+
+                else:
+                    if header == True:
+                        i = 0 
+                        for item in header_split:
+                            print(str(i) + " :" + item)
+                            i += 1
+
+                        print("This is the " + key + " column")
+                        print("What would you like to have it as?")
+                        print("Pick either a column (index) or a constant string value.")
+                        extract_dictionary[key] = input("please input column integer or constant string (NO NUMERIC): ")
+
+                        try:
+                            int(extract_dictionary[key])
+                        except:
+                            binary_dictionary[key] == True
+                        else:
+                            extract_dictionary[key] = int(extract_dictionary[key])
+                            binary_dictionary[key] == True
+                    
+        iter = 1
+        for line in tsv_file:
+            # skip n line
+            if iter <= skip_lines:
+                iter += 1
+                continue
+
+            if csv == False:
+                features = line.split(sep = "\t")
+            elif csv == True:
+                features = line.split(sep = ",")
+
+            # build the attributes value
+            attributes_list = []
+            for key in extract_dictionary["attributes"]:
+                entry_key = key
+                entry_index = extract_dictionary["attributes"][key]
+
+                if type(entry_index) == int:
+                    entry_value = '"' + features[entry_index] + '"'
+                else:
+                    entry_value = '"' + entry_index + '"'
+
+                attributes_list.append(entry_key + " " + entry_value)
+            
+            # an ugly way to merge everything
+            new_file.write("\t".join([features[extract_dictionary["chr"]], 
+                                    extract_dictionary["source"], 
+                                    extract_dictionary["feature"], 
+                                    features[extract_dictionary["start"]], 
+                                    features[extract_dictionary["end"]], 
+                                    extract_dictionary["score"], 
+                                    features[extract_dictionary["strand"]], 
+                                    extract_dictionary["frame"], 
+                                    "; ".join(attributes_list)]) + "\n")
+
+# Convert ex
+
+# Zero index to One - i.e. bed to gtf
+def zero_to_one(gtf_file, out_name):
+    with open(gtf_file, "r") as gtf, open(out_name, "w") as new:
+        for line in gtf:
+            modify_line = line.split(sep="\t")
+            modify_line[3] = int(modify_line[3])
+            modify_line[3] = modify_line[3] + 1
+            modify_line[3] = str(modify_line[3])
+
+            new.write("\t".join(modify_line))
+
+# One index to zero - i.e. gtf to bed
+def one_to_zero(gtf_file, out_name):
+    with open(gtf_file, "r") as gtf, open(out_name, "w") as new:
+        for line in gtf:
+            modify_line = line.split(sep="\t")
+            modify_line[3] = int(modify_line[3])
+            modify_line[3] = modify_line[3] - 1
+            modify_line[3] = str(modify_line[3])
+
+            new.write("\t".join(modify_line))
+
+# Gtf to BED format (True bed format)
+def gtf_to_bed(gtf, outputname, attribute_to_name = False):
+    with open(gtf, "r") as gtf, open(outputname, "w") as new:
+        for line in gtf:
+            modify_line = line.split(sep="\t")
+            modify_line[3] = int(modify_line[3])
+            modify_line[3] = modify_line[3] - 1
+            modify_line[3] = str(modify_line[3])
+
+            bed_line = []
+
+            bed_line.append(modify_line[0])
+            bed_line.append(modify_line[3])
+            bed_line.append(modify_line[4])
+            # obtain name info
+            if attribute_to_name != False:
+                attributes = modify_line[8].split(sep = ";")
+                # strip
+                attributes = list(map(str.strip, attributes))
+                # combine
+                attributes_split = [item.split(sep = " ") for item in attributes]
+                # combine
+                attributes_split = sum(attributes_split, [])
+                index_id = attributes_split.index(attribute_to_name)
+                bed_line.append(attributes_split[index_id + 1])
+            else:
+                bed_line.append(".")
+            # add the length of sequence here later
+            bed_line.append(".")
+            bed_line.append(modify_line[6])
+
+
+            new.write("\t".join(bed_line) + "\n")

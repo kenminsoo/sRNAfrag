@@ -1,3 +1,15 @@
+# Features to Implement & Fixes to Make
+
+## Fixes
+
+## Features to Implement
+1) If sequence exists from external source, validate 1-indexing (or 0)
+2) Create a way to externally validate sequences pulled from the genome
+3) Create a more interactive way to fill the parameters for some functions
+4) Eventually add the ability to generate a SQL relational database that has information on secondary structure, mismatch mappings, and a way to merge similar sequences. 
+5) AASRA alignment if the differences are represented as 2-3 n.t. 
+6) Merge sequences as one if the difference between databases <= 1. 
+
 # Tools For Working Environment and GTF Files
 
 ## Contents
@@ -38,7 +50,7 @@ add_sequence(merged_example.gtf, hg38.fa, seq_merged_example.gtf)
 
 We now have a merged annotation file with 1kb reach to annotate reads. 
 
-### Tools for Managing Environments
+## Tools for Managing Environments
 
 Tools for managing environments consists of three scripts.
 a) Conda install 
@@ -50,10 +62,22 @@ c) R install
     
 Purpose: The previous scripts will hopefully one day be used in combination with a tool that pulls packages used in publications to install them with ease. It will allow for the easy recreation of environments, complete with versions. This will help save time when setting up environments to recreate analyses and to improve reproducability in the computational community.
 
-### Tools for working with gtf files
+## Tools for working with gtf files
 
 I hope to eventually turn this python script for working with gtf files into a package.
 It consists of the following functions. 
+
+### Tool Categories
+1) alias_work.py - to work with chromosomal aliases
+2) gtf_descriptors.py - to describe annotation files, i.e. the number of times certain attributes appear
+3) gtf_generation.py - to create new annotation files from sequence
+4) gtf_combining_metrics.py - to compare how merging annotation files would work, # overlaps, total number, conflicts
+5) basics.py - basic functions
+6) gtf_modifiers.py - modify existing gtf files, i.e. changing keys, adding parent-child relationships
+7) gtf_groundtruth.py - generate a ground truth dataset of different levels of mismatching of sequences
+8) gtf_tracker.py - tracks how any annotation files will be changed so that at the end, one can obtain metrics about what was done
+9) conversion_tools.py - convert files to gtf, change index system
+
 
 a) hamming(seq1, seq2) 
     Takes two sequences and computes the hamming distance. Is mainly used for calculating if two extracted sequences are the same. 
@@ -67,14 +91,14 @@ c) gff3_to_gtf(gff3_file, output_name)
 d) add_sequence_legacy(gtf_file, ref_genome, output_name)
     Takes a gtf file and a reference genome. It will output a gtf file with sequences extracted from the gtf file. This is a slower version of the proceeding function, but is safer in that it works line by line. It is about 200x slower though. 
 
-e) add_sequence(bed_file, ref_genome, output_name, attribute_name = "bed_sequence")
-    Takes a gtf file and a reference genome. It will output a gtf file with sequences extracted from the gtf file. Works in seconds compared to hours. 
+e) gtf_to_bed(gtf, outputname, attribute_to_name = False)
+    Takes a gtf file and turns it into a BED file. The user can specify a certain attribute that they want to keep in the name column of bed files. 
 
 f) compare_sequence(gtf_file, output_name, sequence_feature1, sequence_feature2)
     It takes a gtf_file and expects it to have two features in its attribute column with sequence information. This is typically used to compare one seqeuence feature, possibly from a database of sequences, to a second sequence feature which is extracted by a tool such as the one above. Works to confirm that the sequence in the database is the same as the loci being referred to by the annotation file. 
     
-g) WIP: tsv_to_gtf(tsv, out_name, extract_list)
-    This is current a work in process. It is currently a hardcoded feature that takes a tsv file with information about a certain sequence (i.e. location, strand, chromosome, etc.) and then turns it into a gtf file after the user gives it the location of these features in the tsv file. 
+g) tsv_to_gtf(tsv, out_name, extract_list)
+    An interactive walk through converting a tsv to a gtf file. 
     
 h) ref_combine(fa1_name, fa2_name, out_name, reference)
     This function takes two reference genomes in the fasta format. It also requires a reference text file of aliases for chromosomes. This function can be used to merge UCSC reference genomes with NCBI ones, for example. It is useful mainly for converting alternative haplotypes. Note that is a slow function.
@@ -95,7 +119,7 @@ m) filter_gtf(input_gtf, output_name, filter_by, value, skip = False, num = 1)
     This functions takes in an input gtf file and outputs a filtered file. This should will filter OUT a certain attribute in the final column of a gtf file. 
 
 n) countby_field(input_gtf, output_name, field_index)
-    This function takes in an input gtf file and outputs how many times a certain field appears. This can be used to count the number annotations that appear on each chromsome. 
+    This function takes in an input gtf file and outputs how many times a certain field appears. This can be used to count the number annotations that appear on each chromsome. Count by column.
 
 o) countby_attribute(input_gtf, output_name, countby_value, skip = False, num = 1)
     This function takes in a gtf file and counts by a certain attribute. 
@@ -130,3 +154,16 @@ u) standardize_attributes(gtf_file, gtf_output, a_dict)
     Takes a gtf and a dictionary. The keys in the dictionary should be attribute names from the initial gtf files. The value associated should be what you want to change it to. 
     name => transcript_id should be {"name":"transcript_Id"}
     Key should be in the gtf attributes column. 
+
+v) add_sequence_bed(bed_file, ref_genome, output_name)
+    Takes a bed file and a reference genome. It will output a bedseq file which adds an additional sequence column to use in downstream purposes. It will also put the length of the sequence into the score section. 
+
+w) add_sequence_gtf(gtf_file, ref_genome, output_name, attribute_name = "bed_sequence")
+    Takes a gtf file and a reference genome. It will output a gtf file with sequences extracted from the gtf file. Works in seconds compared to hours. 
+
+x) gtf_to_tsv(gtf_file, output_name, dict_extract)
+    Takes a gtf and a dictionary in the following format:
+    {"attributes":["list", "of", "attributes", "to extract"], "columns": [0 index columns to extract]}
+
+y) ref_chr_select(ref_genome, out_name,chr_list) or gtf_chr_select(gtf, out_name,chr_list)
+    Both take a list of chromosomes and filters them. Default is the standard human chromosomes without haplotypes. 
