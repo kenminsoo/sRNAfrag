@@ -443,45 +443,15 @@ def key_biotype_gtf(gtf_file, gtf_output, a_dict):
         for line in gtf:
             sep_line = line.split(sep = "\t")
             # get only attribute info
-            attributes = sep_line[8].split(sep = ";")
-            # strip
-            attributes = list(map(str.strip, attributes))
-            # combine
-            attributes_split = [item.split(sep = " ") for item in attributes]
-            # combine
-            attributes_split = sum(attributes_split, [])
+            attributes = sep_line[8].strip()
 
             data_origin = sep_line[1]
 
             biotype = a_dict[data_origin]
 
-            attributes_split.append("biotype")
-
-            attributes_split.append('"' + biotype + '"')
-
-            index_ti = attributes_split.index("transcript_id")
-            try:
-                index_tcp = attributes_split.index("transcript_copy_id")
-                tcp_present = True
-            except:
-                tcp_present = False
-            index_seq = attributes_split.index("sequence")
-            index_biotype = attributes_split.index("biotype")
-
-            ti = attributes_split[index_ti + 1] 
-            if tcp_present == True:
-                tcp = attributes_split[index_tcp + 1] 
-            seq = attributes_split[index_seq + 1]
-            biotype = attributes_split[index_biotype + 1] 
-
-            if tcp_present == True:
-                final_entry = ["transcript_id " + ti + "; ","transcript_copy_id " + tcp + "; ", 
-                        "sequence " + seq + "; ", "biotype " + biotype ]
-            elif tcp_present == False:
-                final_entry = ["transcript_id " + ti + "; ", 
-                        "sequence " + seq + "; ", "biotype " + biotype ]
-
-            new.write("\t".join(sep_line[0:8] + ["".join(final_entry)]) + "\n")
+            attributes = attributes + "; biotype " + '"' + biotype + '"'
+ 
+            new.write("\t".join(sep_line[0:8] + [attributes]) + "\n")
 
 # Given a gtf file and a dictionary that gives attribute identifier
 # relationships
@@ -531,5 +501,3 @@ def standardize_attributes(gtf_file, gtf_output, a_dict):
             new.write("\t".join(sep_line) + "\n")
 
     return gtf_output
-
-# Bin Annotation File Into Segment

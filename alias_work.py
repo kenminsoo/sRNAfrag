@@ -170,3 +170,15 @@ def gtf_chr_select(gtf, out_name,chr_list = chr):
                 new.write(line)
             else:
                 continue
+
+# Extracting chromosome names 
+def bam_chr_extract(bam, out):
+    os.system("samtools view -H " + bam + " | grep @SQ | cut -f 2 | sed 's/SN://g' > " + out)
+
+    chroms = []
+
+    with open(out, "r") as chrs:
+        for line in chrs:
+            chroms.append(line)
+
+    return chroms

@@ -1,4 +1,5 @@
 from basics import *
+from gtf_modifiers import *
 
 # Description:
 # Functions that works to convert files from one file type or indexing system to another.
@@ -271,3 +272,71 @@ def gtf_to_bed(gtf, outputname, attribute_to_name = False):
 
 
             new.write("\t".join(bed_line) + "\n")
+
+# BED to GTF
+# single database source
+def bed_to_gtf(bed, output, source, biotype):
+    with open(bed, "r") as bed, open(output, "w") as new:
+        for line in bed:
+            sep = line.split(sep = "\t")
+
+            chr = str(sep[0])
+
+            if "chr" not in chr:
+                chr = "chr" + chr
+
+            start = str(int(sep[1]) + 1)
+            end = str(sep[2])
+
+            id = sep[3]
+
+            strand = sep[5].strip()
+            strand = strand.replace("\n", "")
+
+            attributes = ["transcript_id " + '"'+id+'"', "biotype " + '"'+biotype+'"']
+
+            new_line = [chr.strip(), source.strip(), "exon", start.strip(), end.strip(), ".", strand, ".", "; ".join(attributes)]
+
+            new.write("\t".join(new_line)+"\n")
+
+def gtf_to_fasta(gtf, output, ref_genome, primary_key):
+    seq_list = add_sequence_fast(gtf, ref_genome)
+    
+    with open(gtf, "r") as gtf, open(output, "w") as new:
+        
+
+        iter = 1
+
+        for line in gtf:
+            extracted_sequence = seq_list[iter]
+
+            sep = separate_gtf_line(line)
+
+            columns = sep[0]
+            attributes = sep[1]
+
+            primary_index = attributes.index(primary_key)
+            primary = attributes[primary_index + 1]
+
+            new.write(">" + primary + "\n" + extracted_sequence + "\n")
+
+            iter += 2
+
+def fasta_to_tsv(fasta, output, header_name):
+    with open(fasta, "r") as fasta, open(output, "w") as new:
+
+        new.write(header_name + "\t" + "sequence")
+
+        for line in fasta:
+            if line[0] == ">":
+                entry = line
+                entry_name = line.replace(">", "")
+                entry_name = entry_name.replace("\n", "")
+
+                new.write("\n" + entry_name + "\t")
+
+            else:
+                entry = line.replace("\n", "")
+                new.write(entry)
+
+#fasta_to_tsv("piRNAs/piRNAbank.fasta", "piRNAs/piRNAbank.tsv", "transcript_id")
