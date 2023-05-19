@@ -1,6 +1,4 @@
-# Features to Implement & Fixes to Make
-
-## Fixes
+# GTF Tools for Small RNA Annotations
 
 ## Features to Implement
 1) If sequence exists from external source, validate 1-indexing (or 0)
