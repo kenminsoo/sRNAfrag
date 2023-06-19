@@ -14,6 +14,9 @@ def gff3_to_gtf(gff3_file, output_name):
     with open(gff3_file, "r") as gff3, open(output_name, "w") as new:
         for line in gff3:
 
+            if line[0] == "#":
+                continue
+
             temp_line = line.strip()
             temp_line = temp_line.replace("=", ' "')
             temp_line = temp_line.replace(";", '"; ')
@@ -339,4 +342,21 @@ def fasta_to_tsv(fasta, output, header_name):
                 entry = line.replace("\n", "")
                 new.write(entry)
 
-#fasta_to_tsv("piRNAs/piRNAbank.fasta", "piRNAs/piRNAbank.tsv", "transcript_id")
+def tsv_to_fasta(tsv, output, key_col, seq_col, delim = "\t", skip = 1):
+    with open(output, "w") as new, open(tsv, "r") as tsv:
+        
+        i = 1
+        for line in tsv:
+
+            if i <= skip:
+                i += 1
+                continue
+
+            separate = line.split(sep = delim)
+
+            new.write(">" + separate[key_col].replace('"', "") + "\n")
+
+            new.write(separate[seq_col].replace('"', "") + "\n")
+
+if __name__ == '__main__':
+  fire.Fire()

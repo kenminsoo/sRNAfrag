@@ -14,7 +14,6 @@ from basics import *
 # It only takes a gtf file 
 # BedTools recognizes this
 def add_sequence_legacy(gtf_file, ref_genome, output_name):
-    start_time = time.time()
     
     fasta = ref_genome
     # extract chromosome and location
@@ -32,8 +31,6 @@ def add_sequence_legacy(gtf_file, ref_genome, output_name):
             temp_line = line.strip()
 
             new.write(temp_line + '; bed_sequence "' + extracted_sequence + '"\n')
-
-    print("--- %s seconds ---" % (time.time() - start_time))
 
 # faster version of the above - less safe and assumes that 
 # lines will correspond to each other i.e. 
@@ -501,3 +498,96 @@ def standardize_attributes(gtf_file, gtf_output, a_dict):
             new.write("\t".join(sep_line) + "\n")
 
     return gtf_output
+
+def add_attribute_to_key(gtf_file, attribute_source, source_key_col, source_attribute_col, gtf_key, attribute_name, output,delim = '\t'):
+    
+    source_map = my_dictionary()
+
+    with open(attribute_source, "r") as source:
+        for line in source:
+            sep_source = line.split(sep = delim)
+
+            source_key = sep_source[source_key_col]
+
+            source_key = '"' + source_key + '"'
+
+            source_attribute = sep_source[source_attribute_col]
+
+            source_attribute = source_attribute.replace('\n', "")
+
+            source_attribute = '"' + source_attribute + '"'
+
+            source_map.add(source_key, source_attribute)
+    
+    with open(gtf_file, "r") as gtf, open(output, "w") as new:
+        for line in gtf:
+            sep = separate_gtf_line(line)
+
+            columns = sep[0]
+            attributes = sep[1]
+
+            gtf_key_index = attributes.index(gtf_key)
+            gtf_key_value = attributes[gtf_key_index + 1]
+
+            attributes.append(attribute_name)
+            attributes.append(source_map[gtf_key_value])
+
+            i = 0
+
+            attribute_reconstructor = []
+
+            for item in attributes:
+                
+                if i % 2 == 0:
+                    holder = item + " "
+                else:
+                    holder = holder + item
+
+                    attribute_reconstructor.append(holder)
+
+                i += 1
+
+            new.write("\t".join(columns + ["; ".join(attribute_reconstructor)]) + "\n")
+
+def merge_two_attributes(gtf_file, attribute1, attribute2, new_name, output, delim = "_"):
+    with open(gtf_file, "r") as gtf, open(output, "w") as new:
+        for line in gtf:
+            sep = separate_gtf_line(line)
+
+            columns = sep[0]
+            attributes = sep[1]
+
+            gtf_key_index1 = attributes.index(attribute1)
+            gtf_key_value1 = attributes[gtf_key_index1 + 1]
+
+            gtf_key_index2 = attributes.index(attribute2)
+            gtf_key_value2 = attributes[gtf_key_index2 + 1]
+
+            gtf_new_value = '"' + gtf_key_value1.replace('"', "") + delim + gtf_key_value2.replace('"', "") + '"'
+
+            attributes.append(new_name)
+            attributes.append(gtf_new_value)
+
+            i = 0
+
+            attribute_reconstructor = []
+
+            for item in attributes:
+                
+                if i % 2 == 0:
+                    holder = item + " "
+                else:
+                    holder = holder + item
+
+                    attribute_reconstructor.append(holder)
+
+                i += 1
+
+            new.write("\t".join(columns + ["; ".join(attribute_reconstructor)]) + "\n")
+
+#add_attribute_to_key("snoRNA_std.gtf", "testing_env/CD_addition.tsv", 0, 1, "transcript_id", "box_type", "snoRNA_std_box.gtf")
+
+# merge_two_attributes("snoRNA_std_box.gtf", "transcript_id", "box_type", "new_tid", "snoRNA_std_box_v2.gtf")
+
+if __name__ == '__main__':
+  fire.Fire()

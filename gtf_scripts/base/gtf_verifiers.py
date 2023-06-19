@@ -75,3 +75,6 @@ def compare_fasta_gtf(gtf, fasta, key, output, sequence_attribute, new_dir):
         mismatch_info_ext_pd = pd.DataFrame(mismatch_info_ext, columns=["key", "fasta_seq", "gtf_seq"])
 
         mismatch_info_ext_pd.to_csv(new_dir + "/gtf_mismatch.csv", index = False)
+
+if __name__ == '__main__':
+  fire.Fire()

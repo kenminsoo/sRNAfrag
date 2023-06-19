@@ -182,3 +182,6 @@ def bam_chr_extract(bam, out):
             chroms.append(line)
 
     return chroms
+
+if __name__ == '__main__':
+  fire.Fire()

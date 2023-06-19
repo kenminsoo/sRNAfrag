@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pybedtools import BedTool
 import os
-import time
+import fire
 
 # Descrition:
 # Functions that are helpful for other scripts. 

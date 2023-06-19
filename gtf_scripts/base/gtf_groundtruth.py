@@ -274,11 +274,25 @@ def hisat_align(new_dir, num_mismatch = 2, input_fasta = "sequences.fasta ", p =
                str(num_mismatch*-20) + ",0 -x " + new_dir + "/seqs -f " + input_fasta +
                " -S " + new_dir + "/sequences.sam")
     
-def bowtie_align(new_dir, num_mismatch = 2, input_fasta = "sequences.fasta ", p = 1):
+index = "/seqs"
+
+def bowtie_align(new_dir, num_mismatch = 2, input_fasta = "sequences.fasta ", p = 1, index = index):
+
+    if index == "/seqs":
+        index2 = new_dir + index
+    else:
+        index2 = index
+
     os.system("bowtie2 --ma 0 --rfg 50000,50000 --rdg 50000,50000 --np 50000 -L 10 -R 20 --mp 20,20 --norc -p " + str(p) + " --score-min L," +
-               str(num_mismatch*-20) + ",0 -a -x " + new_dir + "/seqs -U " + input_fasta + " -f " +
+               str(num_mismatch*-20) + ",0 -a -x " + index2 + " -U " + input_fasta + " -f " +
                "-S " + new_dir + "/sequences.sam")
-    
+
+
+def bowtie_align_pipeline(index_name, working_dir, fasta):
+    os.system('cd ' + working_dir + '; \
+    bowtie -f -x ' + index_name + ' ' + fasta +' -k 101 --best --strata -v 0 -S lookup_filtered.sam --reorder')
+
+
 # Parse SAM File
 def parse_sam(new_dir, num_mismatch = 2):
     for i in range(0,num_mismatch + 1):
@@ -457,26 +471,5 @@ def generate_fasta(primary_df, new_dir):
         stringed = stringed.replace("SPACER", "\n")
         f.write(stringed)
 
-#generate_groundtruth("RNA_Central_noLNC_std.gtf", reference_genome, "RNA_central", "transcript_id", {"biotype":[1, "biotype"], "source":[1, "databases"]})
-
-#generate_index("RNA_central")
-
-#hisat_align("RNA_central")
-
-#generate_index_bowtie2("RNA_central")
-
-#bowtie_align("RNA_central")
-
-#parse_sam("RNA_central")
-
-#create_table("RNA_central")
-
-#new_df = eliminate_duplicates_tsv(create_primary_table("piRNAs/pirnadb_v2.gtf", reference_genome, "transcript_id", {"biotype":[1, "biotype"]}, "piRNAbank_to_pirnadb"), "piRNAs/piRNAbank.tsv", "piRNAbank_to_pirnadb", "piRNAbank", "piRNAdb")
-
-#new_df.to_csv("piRNAbank_to_pirnadb/primary_table.csv",index = False)
-
-# select and create snoRNA fasta
-
-#bowtie_align("piRNAs", 2, "mirna_to_snorna_mi/sequences.fasta", 12)
-
-#parse_sam("mirna_to_snorna_mi")
+if __name__ == '__main__':
+  fire.Fire()

@@ -1,33 +1,10 @@
-# GTF Tools for Small RNA Annotations
-
-## Features to Implement
-1) If sequence exists from external source, validate 1-indexing (or 0)
-2) Create a way to externally validate sequences pulled from the genome
-3) Create a more interactive way to fill the parameters for some functions
-4) Eventually add the ability to generate a SQL relational database that has information on secondary structure, mismatch mappings, and a way to merge similar sequences. 
-
-# Tools For Working Environment and GTF Files
+# sRNAfrag - A Pipeline to Analyze Fragmentation in smRNA-seq data 
 
 ## Contents
-1) Tools for managing environments
-2) Tools for working with gtf files 
+1) Pipeline Usage
+2) Scripts to work with GTF File
 
-## Tools for Managing Environments
-
-Tools for managing environments consists of three scripts.
-a) Conda install 
-    Takes a text file of conda packages and installs them
-b) Java install 
-    Takes a text file of java packages and installs them
-c) R install
-    Installs R packages
-    
-Purpose: The previous scripts will hopefully one day be used in combination with a tool that pulls packages used in publications to install them with ease. It will allow for the easy recreation of environments, complete with versions. This will help save time when setting up environments to recreate analyses and to improve reproducability in the computational community.
-
-## Tools for working with gtf files
-
-I hope to eventually turn this python script for working with gtf files into a package.
-It consists of the following functions. 
+## Scripts to working with gtf files
 
 ### Tool Categories
 
@@ -568,5 +545,3 @@ Converts a fasta file to a two column tsv file with read name and sequence.
 - `fasta` (str): Path to input fasta file.
 - `output` (str): Path to output generated tsv file.
 - `header_name` (str): Name of the non-sequence column.
-
-## 7) gtf_verifiers.py

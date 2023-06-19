@@ -270,9 +270,5 @@ def bin_gtf(gtf, output, n, addition_term):
 
     return np.mean(thingy)
 
-
-#print(bin_gtf("snoRNA.gtf", "binned_snoRNA.gtf", 10, "biotype"))
-
-#select_column("binned_snoRNA.gtf", "plus_snorna.gtf", 6, "+")
-#select_column("binned_snoRNA.gtf", "neg_snorna.gtf", 6, "-")
-
+if __name__ == '__main__':
+  fire.Fire()

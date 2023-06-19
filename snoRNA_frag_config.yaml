@@ -1,0 +1,94 @@
+---
+# Modules to run => Boolean values
+# See documentation for more information on module functions
+# Mark true to run module
+module_options:
+  # P0: GTF preparation module
+  # If more prep is needed, use CLI to work with GTF file. 
+  P0:
+    # Run the basic GTF preparation workflow.
+    # Assumed that the GTF is filtered for one biotype
+    bool: False
+  
+  # P1: Standard Processing Module, Pre-Processing & Alignment
+  P1:
+    # Run P1
+    bool: True
+    
+    # Naming Prefix i.e. if fragment then fragment_licenseplate
+    # License plates are generated using MINTplates script based on sequence
+    prefix: mir
+
+    # Build new index in working dir
+    build_index:
+      bool: False
+      reference_location: 
+
+    # Prebuilt index location (required if Build_index is false)
+    built_index_location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/snoRNA_Breast/smallRNA_structure/output/adaptertrim/hg38"
+
+    # Remove UMIs, Default is QIAgen UMI with regex removal option
+    umi_removal:
+      bool: False
+      regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
+    
+    # Remove Adapters, Default is Illumina universal
+    adapter_removal:
+      bool: False
+      sequence: AGATCGGAAGAG
+
+    # An annotation file to generate fragments from => Should be filtered with sequences
+    annotation_options: 
+      location: "/Users/kenminsoo/Desktop/unprocessed-annotations/hsa_mir_3.gtf"
+      # If annotation does not have sequence information, mark True
+      # Requires reference location under this build_index section
+      add_sequence: False
+      # Change key: What attribute the fragment is built upon 
+      # Input what attribute in the GTF to be used to generate source info
+      change_primkey:
+        bool: False
+        original_name:
+
+    # minimum and maximum fragment length
+    min: 15
+    max: 45
+
+    # Run quality checking modules
+    fastqc:
+      bool: False
+
+  # S1: Figure Set 1
+  S1:
+    bool: True
+
+  # P2: Second Processing Module. Dependent on P1 and S1
+  # Ensure that an index location is given in the P1 module before running P2
+  P2: 
+    bool: True
+
+    annotation_file: /Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/SPRMT_hg38_031323.gtf
+
+    # Plot counts vs. fragment location on every souce transcript
+    plot_every_source: True
+
+    # What to annotate for outside mappings (in featurecounts the -g option)
+    look_for: transcript_id
+
+  # SUMMARY: Summarize report in pdf format
+  SUMMARY:
+    bool: False
+
+system_options:
+  # Max number of cores to use
+  num_cores: 5
+  # Keep this amount of memory free in G
+  mem_free: 12
+
+# Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
+dir_locations:
+  # Set the working dir
+  working_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/working"
+  # Location of samples (ENSURE *.fastq.gz)
+  sample_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/samples"
+  # Dir to output files
+  out_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/out"
