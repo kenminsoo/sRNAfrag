@@ -35,18 +35,21 @@ counts_clean <- counts_clean %>%
                distinct()), by = "sequence")
 
 # >20 reads
-counts_filtered <- counts_clean %>%
+counts_filtered_plotting <- counts_clean %>%
   mutate(sums=rowSums(.[2:(sample_index - 1)])) %>%
   filter(sums > 20)
 
 # Divide by number of loci
-counts_adjusted <- counts_filtered
-counts_adjusted[2:(sample_index-1)] <- counts_filtered[2:(sample_index-1)] / counts_filtered$num
+counts_adjusted <- counts_clean
+counts_adjusted[2:(sample_index-1)] <- counts_clean[2:(sample_index-1)] / counts_clean$num
 
+counts_filtered <- counts_adjusted %>%
+  mutate(sums=rowSums(.[2:(sample_index - 1)])) %>%
+  filter(sums > 20)
 
 # LOCI BIAS #
 # Try to plot with a scatter
-plot_log_loci_pre_adj <- pivot_longer(counts_filtered, cols = 2:(sample_index - 1), values_to = "counts", names_to = "samples") %>%
+plot_log_loci_pre_adj <- pivot_longer(counts_filtered_plotting, cols = 2:(sample_index - 1), values_to = "counts", names_to = "samples") %>%
   filter(counts < 100, counts > 0) %>%
   ggplot(aes(x = num, y = counts)) +
   stat_poly_line(formula = y~x, method = "lm") +
@@ -58,7 +61,7 @@ plot_log_loci_pre_adj <- pivot_longer(counts_filtered, cols = 2:(sample_index - 
        title = "Counts vs. Number of loci",
        subtitle = "Counts > 0")
 
-plot_log_loci_post_adj <- pivot_longer(counts_adjusted, cols = 2:(sample_index - 1), values_to = "counts", names_to = "samples") %>%
+plot_log_loci_post_adj <- pivot_longer(counts_filtered, cols = 2:(sample_index - 1), values_to = "counts", names_to = "samples") %>%
   filter(counts < 100, counts > 0) %>%
   ggplot(aes(x = num, y = counts)) +
   stat_poly_line(formula = y~x, method = "lm") +
@@ -235,5 +238,5 @@ counts_adjusted %>%
   tab_header(title = "Top 10 3' Flanking 5-mers") %>%
   gtsave("five-mer_3p.png")
 
-write.csv(counts_adjusted, file = "filtered_corrected_counts.csv", row.names = F)
-write.csv(counts_filtered, file = "filtered_counts.csv", row.names = F)
+write.csv(counts_filtered, file = "filtered_corrected_counts.csv", row.names = F)
+write.csv(counts_filtered_plotting, file = "filtered_counts.csv", row.names = F)

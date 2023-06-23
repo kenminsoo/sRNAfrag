@@ -585,9 +585,35 @@ def merge_two_attributes(gtf_file, attribute1, attribute2, new_name, output, del
 
             new.write("\t".join(columns + ["; ".join(attribute_reconstructor)]) + "\n")
 
-#add_attribute_to_key("snoRNA_std.gtf", "testing_env/CD_addition.tsv", 0, 1, "transcript_id", "box_type", "snoRNA_std_box.gtf")
+# Returns GTF1 anti joined with GTF2
+def gtf_anti_join(gtf1, gtf2, matchkey, output):
+    gtf2_keys = []
+    
+    with open(gtf2, "r") as gtf2_imp:
+        for line in gtf2_imp:
+            sep_gtf2 = separate_gtf_line(line)
 
-# merge_two_attributes("snoRNA_std_box.gtf", "transcript_id", "box_type", "new_tid", "snoRNA_std_box_v2.gtf")
+            attributes = sep_gtf2[1]
+
+            key_index = attributes.index(matchkey)
+
+            attribute_key = attributes[key_index]
+
+            gtf2_keys.append(attribute_key)
+
+    with open(gtf1, "r") as gtf1_imp, open(output, "w") as new:
+        for line in gtf1_imp:
+            sep_gtf1 = separate_gtf_line(line)
+
+            attributes = sep_gtf1[1]
+
+            key_index1 = attributes.index(matchkey)
+
+            if key_index1 in gtf2_keys:
+                continue
+            else:
+                new.write(line)
+
 
 if __name__ == '__main__':
   fire.Fire()

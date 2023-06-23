@@ -17,7 +17,7 @@ module_options:
     
     # Naming Prefix i.e. if fragment then fragment_licenseplate
     # License plates are generated using MINTplates script based on sequence
-    prefix: mir
+    prefix: MIRBASE
 
     # Build new index in working dir
     build_index:
@@ -66,7 +66,7 @@ module_options:
   P2: 
     bool: True
 
-    annotation_file: /Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/SPRMT_hg38_031323.gtf
+    annotation_file: /Users/kenminsoo/Desktop/unprocessed-annotations/mirna_to_snorna/SPRMT_hg38_031323.gtf
 
     # Plot counts vs. fragment location on every souce transcript
     plot_every_source: True
