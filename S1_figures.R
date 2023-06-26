@@ -7,7 +7,7 @@ library(gt)
 library(webshot2)
 
 # Import data
-counts <- read.csv("snoRNA_frag_counts.csv")
+counts <- read.csv("sRNA_frag_counts.csv")
 sample_info <- read.csv("num_reads_bam.csv")
 
 # Clean Reads for Unlabeled Transcripts
@@ -89,7 +89,7 @@ plot_count_density <- counts_adjusted %>%
 fig1 <- (plot_log_loci_pre_adj + plot_log_loci_post_adj) / (plot_count_density) + 
   plot_annotation(title = "Loci Correction & Count Density")
 
-ggsave("fig1.jpeg", plot = fig1, dpi = 500, width = 8, height = 7)
+ggsave("S1_correction_density.jpeg", plot = fig1, dpi = 500, width = 8, height = 7)
 
 # Figure 1 complete #
 
@@ -123,14 +123,14 @@ for (i in 15:(max_length)){
     replace(is.na(.), 0) %>%
     as.matrix() %>%
     ggseqlogo() +
-    ylim(0,2) + labs(title = paste("Length:", i,"By Frequency",sep = " "),
+    ylim(0,2) + labs(title = paste("Length:", i,sep = " "),
                      subtitle = "Passed Filtering")
   
   k <- k + 1
   
 }
 
-ggsave("motifs.jpeg", (wrap_plots(all_pos_motifs) + plot_annotation(title = "Motifs by Frequency")), width = 21, height = 12, dpi = 500)
+ggsave("S1_freq_motifs.jpeg", (wrap_plots(all_pos_motifs) + plot_annotation(title = "Motifs by Frequency")), width = 21, height = 12, dpi = 500)
 
 all_pos_motifs_counts <- list()
 
@@ -161,14 +161,14 @@ for (i in 15:(max_length)){
     replace(is.na(.), 0) %>%
     as.matrix() %>%
     ggseqlogo() +
-    ylim(0,2) + labs(title = paste("Length:", i,"By Counts",sep = " "))
+    ylim(0,2) + labs(title = paste("Length:", i,sep = " "))
   
   k <- k + 1
 }
 
 print("motif_counts")
 
-ggsave("motifs_counts.jpeg", (wrap_plots(all_pos_motifs_counts) + plot_annotation(title = "Motifs by Frequency")), width = 21, height = 12, dpi = 500)
+ggsave("S1_motifs_counts.jpeg", (wrap_plots(all_pos_motifs_counts) + plot_annotation(title = "Motifs by Counts")), width = 21, height = 12, dpi = 500)
 
 # Motif Module Done #
 
@@ -197,7 +197,7 @@ std3_loci <- counts_adjusted %>%
 
 std_loci <- (std1_loci + std2_loci) / std3_loci
 
-ggsave("std_loci.jpeg", std_loci, dpi = 500, width = 10)
+ggsave("S1_std_loci.jpeg", std_loci, dpi = 500, width = 10)
 # std loci module done #
 
 total_counts <- counts_adjusted %>%
@@ -216,7 +216,7 @@ counts_adjusted %>%
   mutate(prop = n / total_counts) %>%
   gt::gt() %>%
   tab_header(title = "Top 10 5' Flanking 5-mers") %>%
-  gtsave("five-mer_5p.png")
+  gtsave("S1_five-mer_5p.png")
 
 total_counts_3p <- counts_adjusted %>%
   group_by(flanking3p) %>%
@@ -236,7 +236,7 @@ counts_adjusted %>%
   dplyr::select(!length) %>%
   gt::gt() %>%
   tab_header(title = "Top 10 3' Flanking 5-mers") %>%
-  gtsave("five-mer_3p.png")
+  gtsave("S1_five-mer_3p.png")
 
 write.csv(counts_filtered, file = "filtered_corrected_counts.csv", row.names = F)
 write.csv(counts_filtered_plotting, file = "filtered_counts.csv", row.names = F)

@@ -44,10 +44,10 @@ combined[['flag','sequence']] = combined["sequence"].str.split('_', expand = Tru
 
 combined['sequence'][combined['flag'] == "16"] = combined['sequence'][combined['flag'] == "16"].apply(rev_comp)
 
-lookup_table = pd.read_csv("snoRNA_frag_lookup.csv")
+lookup_table = pd.read_csv("sRNA_frag_lookup.csv")
 
 new_table = combined.merge(lookup_table, how = "left", on = "sequence")
 
 new_table['length'] = new_table["sequence"].str.len()
 
-new_table.to_csv("snoRNA_frag_counts.csv", index = False)
+new_table.to_csv("sRNA_frag_counts.csv", index = False)

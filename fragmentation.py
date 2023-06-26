@@ -1,4 +1,4 @@
-from gtf_scripts.base.basics import *
+from basics import *
 from MINTplates import *
 import numpy as np
 
@@ -112,6 +112,12 @@ def create_lookup(gtf_file, seq_key, source_key,start, end, output, id_pre = "sd
         df_constructor.append(entry)
 
     lookup_table = pd.DataFrame(df_constructor, columns = constructor_headers)
+
+    lookup_table["sequence"] = lookup_table["sequence"].str.upper()
+
+    lookup_table["flanking5p"] = lookup_table["flanking5p"].str.upper()
+
+    lookup_table["flanking3p"] = lookup_table["flanking3p"].str.upper()
 
     lookup_table = lookup_table.sort_values(by = ["sequence"])
 

@@ -75,8 +75,10 @@ module_options:
     look_for: transcript_id
 
   # SUMMARY: Summarize report in pdf format
-  SUMMARY:
-    bool: False
+  SUMMARY: False
+  
+  # Delete the working directory 
+  delete_working: True
 
 system_options:
   # Max number of cores to use

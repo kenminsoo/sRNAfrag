@@ -11,7 +11,7 @@ import warnings
 
 ## -- Config Variables -- ##
 
-with open("snoRNA_frag_config.yaml", "r") as file:
+with open("sRNA_frag_config.yaml", "r") as file:
     config_vars = yaml.safe_load(file)
 
 # Working directory - All intermediate files will be deleted
@@ -44,7 +44,7 @@ counts_dataset = pd.read_csv("filtered_corrected_counts.csv")
 plt.hist(counts_dataset["num"],bins = 50)
 plt.title("# Filter Passing Fragment Loci Sources")
 plt.xlabel("Number of Sources")
-plt.savefig("Filter_Passing_Hist.jpeg", dpi = 500)
+plt.savefig("P2_Filter_Passing_Hist.jpeg", dpi = 500)
 plt.clf()
 
 # Create data related to the network creation
@@ -588,14 +588,15 @@ plt.hist(ratio)
 plt.title("Ratio of Fragments Spanning >1 Cluster\n" + str(100 * round(number_dis / (thetotal - 1), 2)) + "% of Fragments")
 plt.xlabel("Peaks != / Number of Mentions")
 plt.ylabel("Frequency")
-plt.savefig("cluster_start_end_disagreement.jpeg", dpi = 500)
+plt.savefig("P2_cluster_start_end_disagreement.jpeg", dpi = 500)
 plt.clf()
 
 ref_table = pd.DataFrame.from_dict(merged_references)
-ref_table.to_csv("ref_table.csv", index = False)
+# No longer need you
+#ref_table.to_csv("ref_table.csv", index = False)
 
 os.system("mv ref_table.csv " + out_dir)
-os.system("mv cluster_start_end_disagreement.jpeg " + out_dir)
+os.system("mv P2_cluster_start_end_disagreement.jpeg " + out_dir)
 
 # Merge Tables
 joined_data = counts_dataset.join(ref_table.set_index("original_id"), on = "ID")
@@ -615,6 +616,10 @@ tsv_to_fasta(out_dir + "/filtered_corrected_counts.csv", "filtered_sequences.fa"
 bowtie_align_pipeline(indexed, working_dir, out_dir + "/filtered_sequences.fa")
 
 gtf_anti_join(full_annotation, processed_annotation_file, "transcript_id", "anti_joined.gtf")
+
+# move antijoined file
+os.system('cd ' + out_dir + ";\
+          mv anti_joined.gtf " + working_dir)
 
 # Take out unaligned reads
 os.system('cd ' + working_dir + "; \

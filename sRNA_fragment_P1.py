@@ -1,13 +1,16 @@
-from gtf_scripts.base.basics import *
+from basics import *
 from fragmentation import *
-import os
-from gtf_scripts.base.gtf_modifiers import *
-from gtf_scripts.base.conversion_tools import *
-from gtf_scripts.base.gtf_groundtruth import *
+from gtf_modifiers import *
+from conversion_tools import *
+from gtf_groundtruth import *
 import glob
-import time
+import yaml
+import os
 
 # CONFIG START #
+
+with open("sRNA_frag_config.yaml", "r") as file:
+    config_vars = yaml.safe_load(file)
 
 # WARNINGS #
 ##--!!USE ABSOLUTE PATHS!!--##
@@ -15,47 +18,66 @@ import time
 # WARNINGS #
 
 # Working directory - All intermediate files will be deleted
-working_dir = "/Volumes/Extreme_SSD/rerun_cell_lines/working"
+working_dir = config_vars["dir_locations"]["working_dir"]
 
 # Sample directory
-sample_dir = "/Volumes/Extreme_SSD/rerun_cell_lines/samples"
+sample_dir = config_vars["dir_locations"]["sample_dir"]
 
 # Reference genome location
-build_bool = False
-reference_genome = ""
+build_bool = config_vars["module_options"]["P1"]["build_index"]["bool"]
+reference_genome = config_vars["module_options"]["P1"]["build_index"]["reference_location"]
+
+if build_bool == True:
+    if reference_genome is None or reference_genome == "":
+        raise ValueError("Reference location required if build index is TRUE.")
+    elif os.path.isfile(reference_genome) == False:
+        raise ValueError("Invalid path for build_index reference_location. (check YAML config)")
 
 # Alignment index name or location
-index_name = "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/snoRNA_Breast/smallRNA_structure/output/adaptertrim/hg38"
+index_name = config_vars["module_options"]["P1"]["built_index_location"]
+
+if build_bool == False:
+    if index_name == "" or index_name is None:
+        raise ValueError("Index location is required if a reference genome is not to be built.")
 
 # Out directory with all final files
-out_dir = "/Volumes/Extreme_SSD/rerun_cell_lines/out"
+out_dir = config_vars["dir_locations"]["out_dir"]
 
 # Annotation file to fragment, should be filtered for one biotype
-annotation_file = "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/snoRNA_std_box_v2.gtf"
-add_sequences_bool = False
+annotation_file = config_vars["module_options"]["P1"]["annotation_options"]["location"]
+add_sequences_bool = config_vars["module_options"]["P1"]["annotation_options"]["add_sequence"]
+change_prim_key_bool = config_vars["module_options"]["P1"]["annotation_options"]["change_primkey"]["bool"]
+original_name = config_vars["module_options"]["P1"]["annotation_options"]["change_primkey"]["original_name"]
+
+# ID Prefix
+id_prefix = config_vars["module_options"]["P1"]["prefix"]
+
+## == Modify annotation == ##
+
+## == Modify annotation == ##
 
 # Remove UMIs, True or False
-remove_umis_bool = True
+remove_umis_bool = config_vars["module_options"]["P1"]["umi_removal"]["bool"]
 
 # UMI Pattern
-umi_pattern = ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
+umi_pattern = config_vars["module_options"]["P1"]["umi_removal"]["regex"]
 
 # Remove Adapters
-remove_adapters_bool = True
+remove_adapters_bool = config_vars["module_options"]["P1"]["adapter_removal"]["bool"]
 
 # Adapter Settings
-adapter = "AGATCGGAAGAG"
-min_length = 15
-max_length = 45
+adapter = config_vars["module_options"]["P1"]["adapter_removal"]["sequence"]
+min_length = config_vars["module_options"]["P1"]["min"]
+max_length = config_vars["module_options"]["P1"]["max"]
 
 # Quality Check?
-fastqc_bool = True
+fastqc_bool = config_vars["module_options"]["P1"]["fastqc"]["bool"]
 
 # Keep This Amount of Memory Free (G)
-mem_free = 12
+mem_free = config_vars["system_options"]["mem_free"]
 
 # Max number of cores
-max_cores = 3
+max_cores = config_vars["system_options"]["num_cores"]
 
 # CONFIG END #
 
@@ -91,9 +113,6 @@ if n == 0:
 os.system('cd ' + working_dir + ';\
     echo JOB,STATUS > pipeline_summary.csv')
 
-timing = []
-st = time.time()
-
 ## FASTQC Module 1 ##
 if fastqc_bool == True:
     os.system('cd ' + working_dir + ';\
@@ -122,14 +141,7 @@ if fastqc_bool == True:
     else:
         raise ValueError("FASTQC Module Did not Run Properly")
 
-et = time.time()
-
-timing.append(["FASTQC_Pre", str(et - st)])
-
 ## Remove UMI from files ##
-
-st = time.time()
-
 if remove_umis_bool == True:
     os.system('cd ' + working_dir + ';\
     cat samples_adapters.txt | parallel -I ,,,  --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "umi_tools extract --extract-method=regex --bc-pattern=' + "'"+ umi_pattern  + "'" + ' -I ,,,.fastq.gz -S processed.,,,.fastq.gz";\
@@ -149,13 +161,7 @@ if remove_umis_bool == True:
     else:
         raise ValueError("UMI extraction failed.")
 
-
-et = time.time()
-
-timing.append(["UMI_Extraction", str(et - st)])
 ## Remove Adapters ##
-
-st = time.time()
 
 if remove_adapters_bool == True:
     os.system('cd ' + working_dir + '; \
@@ -176,14 +182,7 @@ if remove_adapters_bool == True:
     else:
         raise ValueError("Adapter Removal failed.")
 
-et = time.time()
-
-timing.append(["Adapter Removal", str(et - st)])
-
 ## FASTQC MODULE ##
-
-st = time.time()
-
 if remove_adapters_bool == True:
     if fastqc_bool == True:
         os.system('cd ' + working_dir + ';\
@@ -218,28 +217,20 @@ if remove_adapters_bool == True:
                 sample = line
                 sample = sample.replace("\n", "")
 
-                extract_zip = out_dir + "/fastqc_posttrim/" + sample + "_fastqc.zip"
+                #extract_zip = out_dir + "/fastqc_posttrim/" + sample + "_fastqc.zip"
 
-                os.system("cd " + out_dir + "/fastqc_posttrim;\
-                unzip -o " + extract_zip)
+                #os.system("unzip " + extract_zip)
 
-                adapter_status = pd.read_csv(out_dir + "/fastqc_posttrim/" + sample + "_fastqc/summary.txt", sep = "\t")
+                #adapter_status = pd.read_csv(out_dir + "/fastqc_posttrim/" + sample + "_fastqc/summary.txt", sep = "\t")
 
-                status = list(adapter_status.loc[adapter_status["Basic Statistics"] == "Adapter Content"]["PASS"])[0]
+                #status = list(adapter_status.loc[adapter_status["Basic Statistics"] == "Adapter Content"]["PASS"])[0]
 
-                if status == "PASS":
-                    print("Adapter QC Pass")
-                else:
-                    raise ValueError("Adapter QC Failed")
-
-et = time.time()
-
-timing.append(["FASTQC_Post", str(et - st)])
+                #if status == "PASS":
+                #    print("Adapter QC Pass")
+                #else:
+                #    raise ValueError("Adapter QC Failed")
 
 ## Alignment Module ##
-
-st = time.time()
-
 os.system('cd ' + working_dir + '; \
             cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "bowtie -x ' + index_name + ' {}.fastq.gz -k 101 --best --strata -v 0 -S {}.sam --reorder";\
             cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "samtools view {}.sam -b -o {}.bam";\
@@ -256,12 +247,6 @@ if status == "COMPLETE":
     print("OK")
 else:
     raise ValueError("Alignment Module failed.")
-
-et = time.time()
-
-timing.append(["Alignment", str(et - st)])
-
-st = time.time()
 
 ## Deduplication BAM files ##
 if remove_umis_bool == True:
@@ -281,48 +266,24 @@ if remove_umis_bool == True:
     if len(files) != n:
         raise ValueError("UMI Dedup failed.")
 
-et = time.time()
-
-timing.append(["UMI Deduplication", str(et - st)])
-
 ## Fragmentation Specific Module ##
 
 # Add sequence if needed !!! ENSURE SEQUENCE IS LABELED AS SEQUENCE
 # !!! ENSURE PRIMARY KEY IS CALLED TRANSCRIPT ID
 
-st = time.time()
-
 gtf_to_bed(annotation_file, working_dir + "/filtering.bed")
 os.system('cd ' + working_dir + '; \
           echo FILTERING BED,COMPLETE >> pipeline_summary.csv')
 
-et = time.time()
-
-timing.append(["Bed Creation", str(et - st)])
-
-st = time.time()
-
 # Create Lookup Table
-create_lookup(annotation_file, "sequence", "new_tid", min_length, max_length, working_dir + "/snoRNA_frag_lookup.csv")
+create_lookup(annotation_file, "sequence", "transcript_id", min_length, max_length, working_dir + "/sRNA_frag_lookup.csv", id_prefix)
 os.system('cd ' + working_dir + '; \
           echo LOOKUP TABLE,COMPLETE >> pipeline_summary.csv')
-
-et = time.time()
-
-timing.append(["Lookup Creation", str(et - st)])
-
-st = time.time()
 
 # Index
 os.system('cd ' + working_dir + '; \
           cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "samtools index {}.bam";\
           echo BAM FILES INDEXED,COMPLETE >> pipeline_summary.csv')
-
-et = time.time()
-
-timing.append(["BAM indexing", str(et - st)])
-
-st = time.time()
 
 # Query for Range
 os.system('cd ' + working_dir + "; \
@@ -344,11 +305,6 @@ if status == "COMPLETE":
 else:
     raise ValueError("Count extraction failed.")
 
-et = time.time()
-
-timing.append(["Fragment Extraction", str(et - st)])
-
-st = time.time()
 
 # Get count info
 os.system('cd ' + working_dir + '; \
@@ -362,24 +318,10 @@ os.system('cd ' + working_dir + '; \
     echo RUN STATS,COMPLETE >> pipeline_summary.csv;\
           mv num_reads_bam.csv ' + out_dir)
 
-et = time.time()
-
-timing.append(["Bam Stats", str(et - st)])
-
-st = time.time()
-
 # Combine files
 os.system('cp combine.py ' + working_dir + ";\
           cd " + working_dir + ";\
             python combine.py;\
                 echo COUNTS COMBINED >> pipeline_summary.csv; \
-                    mv snoRNA_frag_counts.csv " + out_dir + ";\
+                    mv sRNA_frag_counts.csv " + out_dir + ";\
                     echo COUNTS MERGED,COMPLETE >> pipeline_summary.csv")
-
-et = time.time()
-
-timing.append(["Combine Counts", str(et - st)])
-
-timing_df = pd.DataFrame(timing, columns = ["Job", "Time"])
-
-timing_df.to_csv("time.csv", index = False)
