@@ -30,6 +30,13 @@ index_name = config_vars["module_options"]["P1"]["built_index_location"]
 # Out directory with all final files
 out_dir = config_vars["dir_locations"]["out_dir"]
 
+# Timing output name
+out_split = out_dir.split(sep = "/")
+biotype_name = out_split[-1]
+species_name = out_split[-2]
+
+time_name = biotype_name + "_" + species_name + "_P1"
+
 # Annotation file to fragment, should be filtered for one biotype
 annotation_file = config_vars["module_options"]["P1"]["annotation_options"]["location"]
 
@@ -66,6 +73,8 @@ mem_free = config_vars["system_options"]["mem_free"]
 max_cores = config_vars["system_options"]["num_cores"]
 
 # CONFIG END #
+
+P1_timing = timing()
 
 ## Directory Setup ##
 
@@ -228,6 +237,8 @@ if remove_adapters_bool == True:
         print("Use ctrl-C to cancel pipeline.")
         input()
 
+P1_timing.take_time("P1_Pre-Processing")
+
 gtf_attribute_to_fasta(annotation_file, working_dir + "/transcriptome.fa", "sequence", "transcript_id", pipeline = True)
 
 generate_index_bowtie(working_dir + "/transcriptome.fa", working_dir + "/transcriptome")
@@ -245,6 +256,8 @@ else:
                 cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "samtools view {}.sam -b -o {}.bam";\
                 cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "rm {}.sam";\
                 echo ALIGNMENT MODULE,COMPLETE >> pipeline_summary.csv')
+
+P1_timing.take_time("P1_Alignment")
 
 progress_track = pd.read_csv(working_dir + "/pipeline_summary.csv")
 
@@ -273,12 +286,16 @@ if remove_umis_bool == True:
     if len(files) != n:
         raise ValueError("UMI Dedup failed.")
 
+P1_timing.take_time("P1_UMI-Dedup")
+
 ## Fragmentation Specific Module ##
 
 # Create Lookup Table
 create_lookup(annotation_file, "sequence", "transcript_id", min_length, max_length, working_dir + "/sRNA_frag_lookup.csv", id_prefix)
 os.system('cd ' + working_dir + '; \
           echo LOOKUP TABLE,COMPLETE >> pipeline_summary.csv')
+
+P1_timing.take_time("P1_Lookup")
 # Index
 
 # Query for Range
@@ -293,7 +310,10 @@ os.system('cd ' + working_dir + "; \
 os.system('cp .change.sh ' + working_dir + ";\
           cd " + working_dir + ";\
           sh .change.sh;\
+          python combine.py;\
           echo FRAGMENT COUNTS EXTRACTED,COMPLETE >> pipeline_summary.csv")
+
+P1_timing.take_time("P1_Counting")
 
 # Ensure Finished
 progress_track = pd.read_csv(working_dir + "/pipeline_summary.csv")
@@ -319,9 +339,13 @@ os.system('cd ' + working_dir + '; \
           mv num_reads_bam.csv ' + out_dir)
 
 # Combine files
-os.system('cp .combine.py ' + working_dir + ";\
+os.system('cp combine.py ' + working_dir + ";\
           cd " + working_dir + ";\
-            python .combine.py;\
+            python combine.py;\
                 echo COUNTS COMBINED >> pipeline_summary.csv; \
                     mv sRNA_frag_counts.csv " + out_dir + ";\
                     echo COUNTS MERGED,COMPLETE >> pipeline_summary.csv")
+
+P1_timing.take_time("P1_Merge-tsv")
+
+P1_timing.export(time_name)

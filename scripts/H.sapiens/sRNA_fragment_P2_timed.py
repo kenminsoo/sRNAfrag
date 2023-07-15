@@ -40,7 +40,16 @@ make_lots = config_vars["module_options"]["P2"]["plot_every_source"]
 # Prefix
 prefix = config_vars["module_options"]["P1"]["prefix"]
 
+# Timing info
+out_split = out_dir.split(sep = "/")
+biotype_name = out_split[-1]
+species_name = out_split[-2]
+
+time_name = biotype_name + "_" + species_name
+
 ## -- Config End -- ##
+
+P2_timing = timing()
 
 # Read in data and plot
 
@@ -131,6 +140,8 @@ for key in network_building_dict:
 
 S = [connection_graph.subgraph(list(connection_graph.neighbors(c)) + [c]).copy() for c,d in connection_graph.nodes(data = True) if d["node_type"] == "source"]
 
+P2_timing.take_time("P2_Build-Stars")
+
 # note: Import the fragmentation prefix
 
 prefix = prefix
@@ -197,6 +208,8 @@ for key in to_test_graph:
 
 if make_lots == True:
     os.system("mv source_peaks " + out_dir)
+
+P2_timing.take_time("P2_Plot-Counts")
 
 # Detect Peaks #
 x = 1
@@ -445,6 +458,8 @@ alt_peaks_df = pd.DataFrame.from_dict(alternate_peaks)
 alt_peaks_df.to_csv("alternate_peaks.csv", index = False)
 os.system("mv alternate_peaks.csv " + out_dir)
 
+P2_timing.take_time("P2_Call-Peaks")
+
 # Cluster Peaks
 
 peak_clustering_graph = nx.Graph()
@@ -556,6 +571,8 @@ for i in S:
 # Now each independent graph is kept
 S_fragments = [peak_clustering_graph.subgraph(c).copy() for c in nx.connected_components(peak_clustering_graph)]
 
+P2_timing.take_time("P2_Cluster")
+
 # Calculate disagreement to full ratio
 id_counter = 1
 new_id = prefix + "_merged_"
@@ -614,6 +631,8 @@ new_id_index = columns_joined.index("new_id")
 counts_table = joined_data.iloc[:,[new_id_index] + list(range(1, end_index))]
 sum_table = counts_table.groupby("new_id").agg(sum)
 sum_table = sum_table.reset_index()
+
+P2_timing.take_time("P2_Cluster-Counting")
 
 ## == ## Detection of outside mapping ## == ##
 num = list(counts_dataset.columns).index("ID")
@@ -826,6 +845,8 @@ sum_table_ann.to_csv("merged_counts.csv", index = False)
 
 os.system("mv merged_counts.csv " + out_dir)
 
+P2_timing.take_time("P2_Annotate-Outside-Maps")
+
 # make diagrams showing how peaks were laid out
 
 if make_lots == True:
@@ -931,3 +952,6 @@ if make_lots == True:
             plt.clf()
 
             i = 1
+
+P2_timing.take_time("P2_Plot-Cluster-Loci")
+P2_timing.export(time_name + "_P2")

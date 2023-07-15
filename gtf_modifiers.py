@@ -128,6 +128,36 @@ def filter_gtf(input_gtf, output_name, filter_by, value, skip = False, num = 1):
             else: 
                 new.write(line)
 
+def select_gtf(input_gtf, output_name, select_by, value, skip = False, num = 1):
+    with open(input_gtf, "r") as annotation, open(output_name, "w") as new:
+        # skip n number of lines
+        iter = 1
+        for line in annotation:
+            if skip == True: 
+                if iter <= num:
+                    iter += 1
+                    continue
+            # split
+            split_line = line.strip().split(sep = "\t")
+            # get only sequence info
+            attributes = split_line[-1].split(sep = ";")
+            # strip
+            attributes = list(map(str.strip, attributes))
+            # combine
+            attributes_split = [item.split(sep = " ") for item in attributes]
+            # combine
+            attributes_split = sum(attributes_split, [])
+            # this is done because combining annotation files often results in
+            # different index numbers for features
+            # find index of first feature and pull sequence
+            index1 = attributes_split.index(select_by)
+            type_feature = attributes_split[index1 + 1]
+            type_feature = type_feature.replace('"', "")
+            if type_feature == value:
+                new.write(line)
+            else: 
+                continue
+
 # Will filter by a column
 # 0 index
 def select_column(input_gtf, output_name, col_number, value):
@@ -597,7 +627,7 @@ def gtf_anti_join(gtf1, gtf2, matchkey, output):
 
             key_index = attributes.index(matchkey)
 
-            attribute_key = attributes[key_index]
+            attribute_key = attributes[key_index + 1]
 
             gtf2_keys.append(attribute_key)
 
@@ -609,7 +639,9 @@ def gtf_anti_join(gtf1, gtf2, matchkey, output):
 
             key_index1 = attributes.index(matchkey)
 
-            if key_index1 in gtf2_keys:
+            attribute = attributes[key_index + 1]
+
+            if attribute in gtf2_keys:
                 continue
             else:
                 new.write(line)

@@ -46,5 +46,6 @@ python ../gtf_modifiers.py merge_two_attributes $outdir"/"$gtf_basename"_mature.
 python ../conversion_tools.py gtf_to_fasta $outdir"/mirna_aasra.gtf" $outdir"/AASRA_mirna.fa" $ref_genome deriv_id
 
 # From this point on
+# Generate counts with the bowtie commands in the paper
 # Copy the miR_bench.R file wherever gtfs were saved & run
 # Copy the peak files to the same location in the output after running pipeline

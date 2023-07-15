@@ -256,6 +256,9 @@ def generate_index_hisat(new_dir):
 def generate_index_bowtie2(new_dir):
     os.system("bowtie2-build " + new_dir + "/" + "sequences.fasta" + " " + new_dir + "/" + "seqs")
 
+def generate_index_bowtie(fasta, outname):
+    os.system("bowtie-build " + fasta + " " + outname)
+
 # Check if index exists
 def index_exist(new_dir):
     files = glob.glob(new_dir + "/" + "seqs.*")

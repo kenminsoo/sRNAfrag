@@ -1,4 +1,8 @@
 ---
+# ARIDOPSIS THALIANA
+# Annotations from NCBI taxonomy browser
+# All three biotypes were run after changing some parameters
+
 # Modules to run => Boolean values
 # See documentation for more information on module functions
 # Mark true to run module
@@ -17,7 +21,7 @@ module_options:
     
     # Naming Prefix i.e. if fragment then fragment_licenseplate
     # License plates are generated using MINTplates script based on sequence
-    prefix: hg38
+    prefix: tair
 
     # Build new index in working dir
     build_index:
@@ -25,29 +29,29 @@ module_options:
       reference_location: 
 
     # Prebuilt index location (required if Build_index is false)
-    built_index_location: "/Volumes/Extreme_SSD/h_sapiens/hg38"
+    # I would recconmend that you build it yourself using bowtie-build
+    built_index_location: "/Volumes/Extreme_SSD/a_thaliana/tair"
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
-    # for our cell line samples, UMIs and Adapters are already removed.
-    # We add adapter trimming time from 9 core run.
     umi_removal:
       bool: False
       regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
     
     # Remove Adapters, Default is Illumina universal
     adapter_removal:
-      bool: False
-      sequence: AGATCGGAAGAG
+      bool: True
+      sequence: AGATCGGAAGAGC
 
     # An annotation file to generate fragments from => Should be filtered with sequences
     annotation_options: 
-      location: "/Volumes/Extreme_SSD/h_sapiens/h.sapiens_snRNA_final.gtf"
+      location: "/Volumes/Extreme_SSD/a_thaliana/tair_snRNA_final.gtf"
     # Trim n number of bases from the 5' or 3' end during alignment
     trim5p3p:
       bool: False
       p5: 4
       p3: 4
 
+      
     # minimum and maximum fragment length
     min: 15
     max: 45
@@ -60,16 +64,16 @@ module_options:
 
   # S1: Figure Set 1
   S1:
-    bool: False
+    bool: True
 
   # P2: Second Processing Module. Dependent on P1 and S1
   # Ensure that an index location is given in the P1 module before running P2
   P2: 
-    bool: False
+    bool: True
 
-    # from ITAS publication
-    # merged with snoDB
-    annotation_file: /Volumes/Extreme_SSD/h_sapiens/SPRMT_hg38_031323.gtf
+    # If you'd like to practically annotate out of space mappings,
+    # One should use a filtered gtf built on priori assumptions.
+    annotation_file: /Volumes/Extreme_SSD/a_thaliana/tair_3.gtf
 
     # Plot counts vs. fragment location on every souce transcript
     plot_every_source: True
@@ -78,26 +82,25 @@ module_options:
     look_for: transcript_id
 
     # What the column with exon would be
-    col2_name: exon
-
+    col2_name: transcript
 
   # SUMMARY: Summarize report in pdf format
   SUMMARY: True
   
   # Delete the working directory 
-  delete_working: False
+  delete_working: True
 
 system_options:
   # Max number of cores to use
-  num_cores: 9
+  num_cores: 6
   # Keep this amount of memory free in G
   mem_free: 2
 
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Volumes/Extreme_SSD/h_sapiens/working_2"
+  working_dir: "/Volumes/Extreme_SSD/a_thaliana/working"
   # Location of samples (ENSURE *.fastq.gz)
-  sample_dir: "/Volumes/Extreme_SSD/h_sapiens/samples"
+  sample_dir: "/Volumes/Extreme_SSD/a_thaliana/samples"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/h_sapiens/sn_out_test"
+  out_dir: "/Volumes/Extreme_SSD/a_thaliana/sn_out"

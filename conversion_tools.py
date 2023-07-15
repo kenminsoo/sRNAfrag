@@ -325,6 +325,82 @@ def gtf_to_fasta(gtf, output, ref_genome, primary_key):
 
             iter += 2
 
+# Turn to fasta and generate an alias file for all transcripts that have alias
+def gtf_attribute_to_fasta(gtf, output, attribute, primary_key, pipeline = False):
+    names = defaultdict(set)
+    if pipeline:
+        with open(gtf, "r") as gtf, open(output, "w") as new, open(output + ".gtf", "w") as new_gtf:
+            iter = 1
+
+            for line in gtf:
+
+                sep = separate_gtf_line(line)
+
+                columns = sep[0]
+                attributes = sep[1]
+
+                seq_index = attributes.index(attribute)
+                extracted_sequence = attributes[seq_index + 1]
+                extracted_sequence = extracted_sequence.upper()
+
+                primary_index = attributes.index(primary_key)
+                primary = attributes[primary_index + 1]
+
+                if extracted_sequence in names:
+                    names[extracted_sequence].add(primary)
+                    # generate a deduplicated gtf
+                else:
+                    new.write(">" + primary + "\n" + extracted_sequence + "\n")
+                    new_gtf.write(line)
+
+                    names[extracted_sequence].add(primary)
+
+
+            iter += 2
+    else:
+        with open(gtf, "r") as gtf, open(output, "w") as new:
+            iter = 1
+
+            for line in gtf:
+
+                sep = separate_gtf_line(line)
+
+                columns = sep[0]
+                attributes = sep[1]
+
+                seq_index = attributes.index(attribute)
+                extracted_sequence = attributes[seq_index + 1]
+
+                primary_index = attributes.index(primary_key)
+                primary = attributes[primary_index + 1]
+
+                if extracted_sequence in names:
+                    names[extracted_sequence].add(primary)
+                    # generate a deduplicated gtf
+                else:
+                    new.write(">" + primary + "\n" + extracted_sequence + "\n")
+
+                    names[extracted_sequence].add(primary)
+
+    # generate alias for user reference
+    alias_table_name = output + "_alias.csv"
+    with open(alias_table_name, "w") as alias:
+        alias.write("primary_id,alias\n")
+        for entry in names:
+            if len(names[entry]) != 1:
+                # extract names
+                k = 0
+                for entry in names[entry]:
+                    if k == 0:
+                        first_name = entry
+                        k += 1
+                    else:
+                        entry_out = first_name + "," + entry
+                        alias.write(entry_out + "\n")
+
+
+
+
 def fasta_to_tsv(fasta, output, header_name):
     with open(fasta, "r") as fasta, open(output, "w") as new:
 

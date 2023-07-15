@@ -99,5 +99,6 @@ def countby_attribute(input_gtf, output_name, countby_value, skip = False, num =
 
         new.write(str(return_data))
 
+
 if __name__ == '__main__':
   fire.Fire()

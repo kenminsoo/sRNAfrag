@@ -17,7 +17,7 @@ module_options:
     
     # Naming Prefix i.e. if fragment then fragment_licenseplate
     # License plates are generated using MINTplates script based on sequence
-    prefix: hg38
+    prefix: MIRBASE
 
     # Build new index in working dir
     build_index:
@@ -25,11 +25,9 @@ module_options:
       reference_location: 
 
     # Prebuilt index location (required if Build_index is false)
-    built_index_location: "/Volumes/Extreme_SSD/h_sapiens/hg38"
+    built_index_location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/snoRNA_Breast/smallRNA_structure/output/adaptertrim/hg38"
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
-    # for our cell line samples, UMIs and Adapters are already removed.
-    # We add adapter trimming time from 9 core run.
     umi_removal:
       bool: False
       regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
@@ -41,12 +39,15 @@ module_options:
 
     # An annotation file to generate fragments from => Should be filtered with sequences
     annotation_options: 
-      location: "/Volumes/Extreme_SSD/h_sapiens/h.sapiens_snRNA_final.gtf"
-    # Trim n number of bases from the 5' or 3' end during alignment
-    trim5p3p:
-      bool: False
-      p5: 4
-      p3: 4
+      location: "/Users/kenminsoo/Desktop/unprocessed-annotations/hsa_mir_3.gtf"
+      # If annotation does not have sequence information, mark True
+      # Requires reference location under this build_index section
+      add_sequence: False
+      # Change key: What attribute the fragment is built upon 
+      # Input what attribute in the GTF to be used to generate source info
+      change_primkey:
+        bool: False
+        original_name:
 
     # minimum and maximum fragment length
     min: 15
@@ -54,22 +55,19 @@ module_options:
 
     # Run quality checking modules
     fastqc:
-      bool: True
-      # Pause pipeline after fastqc is finished
+      bool: False
       pause: False
 
   # S1: Figure Set 1
   S1:
-    bool: False
+    bool: True
 
   # P2: Second Processing Module. Dependent on P1 and S1
   # Ensure that an index location is given in the P1 module before running P2
   P2: 
-    bool: False
+    bool: True
 
-    # from ITAS publication
-    # merged with snoDB
-    annotation_file: /Volumes/Extreme_SSD/h_sapiens/SPRMT_hg38_031323.gtf
+    annotation_file: /Users/kenminsoo/Desktop/unprocessed-annotations/mirna_to_snorna/SPRMT_hg38_031323.gtf
 
     # Plot counts vs. fragment location on every souce transcript
     plot_every_source: True
@@ -77,27 +75,23 @@ module_options:
     # What to annotate for outside mappings (in featurecounts the -g option)
     look_for: transcript_id
 
-    # What the column with exon would be
-    col2_name: exon
-
-
   # SUMMARY: Summarize report in pdf format
-  SUMMARY: True
+  SUMMARY: False
   
   # Delete the working directory 
-  delete_working: False
+  delete_working: True
 
 system_options:
   # Max number of cores to use
-  num_cores: 9
+  num_cores: 5
   # Keep this amount of memory free in G
-  mem_free: 2
+  mem_free: 12
 
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Volumes/Extreme_SSD/h_sapiens/working_2"
+  working_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/working"
   # Location of samples (ENSURE *.fastq.gz)
-  sample_dir: "/Volumes/Extreme_SSD/h_sapiens/samples"
+  sample_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/samples"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/h_sapiens/sn_out_test"
+  out_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/out"

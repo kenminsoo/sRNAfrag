@@ -1,4 +1,8 @@
 ---
+# ARIDOPSIS THALIANA
+# Annotations from NCBI taxonomy browser
+# All three biotypes were run after changing some parameters
+
 # Modules to run => Boolean values
 # See documentation for more information on module functions
 # Mark true to run module
@@ -17,7 +21,7 @@ module_options:
     
     # Naming Prefix i.e. if fragment then fragment_licenseplate
     # License plates are generated using MINTplates script based on sequence
-    prefix: sdr_snoRNAdb2023
+    prefix: tair
 
     # Build new index in working dir
     build_index:
@@ -25,7 +29,8 @@ module_options:
       reference_location: 
 
     # Prebuilt index location (required if Build_index is false)
-    built_index_location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/snoRNA_Breast/smallRNA_structure/output/adaptertrim/hg38"
+    # I would recconmend that you build it yourself using bowtie-build
+    built_index_location: "/Volumes/Extreme_SSD/a_thaliana/tair"
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
     umi_removal:
@@ -34,20 +39,17 @@ module_options:
     
     # Remove Adapters, Default is Illumina universal
     adapter_removal:
-      bool: False
-      sequence: AGATCGGAAGAG
+      bool: True
+      sequence: AGATCGGAAGAGC
 
     # An annotation file to generate fragments from => Should be filtered with sequences
     annotation_options: 
-      location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/snoRNA_std_box_v2.gtf"
-      # If annotation does not have sequence information, mark True
-      # Requires reference location under this build_index section
-      add_sequence: False
-      # Change key: What attribute the fragment is built upon 
-      # Input what attribute in the GTF to be used to generate source info
-      change_primkey:
-        bool: False
-        original_name:
+      location: "/Volumes/Extreme_SSD/a_thaliana/tair_snoRNA_final.gtf"
+    # Trim n number of bases from the 5' or 3' end during alignment
+    trim5p3p:
+      bool: False
+      p5: 4
+      p3: 4
 
     # minimum and maximum fragment length
     min: 15
@@ -55,7 +57,9 @@ module_options:
 
     # Run quality checking modules
     fastqc:
-      bool: False
+      bool: True
+      # Pause pipeline after fastqc is finished
+      pause: False
 
   # S1: Figure Set 1
   S1:
@@ -66,7 +70,9 @@ module_options:
   P2: 
     bool: True
 
-    annotation_file: /Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/SPRMT_hg38_031323.gtf
+    # If you'd like to practically annotate out of space mappings,
+    # One should use a filtered gtf built on priori assumptions.
+    annotation_file: /Volumes/Extreme_SSD/a_thaliana/tair_3.gtf
 
     # Plot counts vs. fragment location on every souce transcript
     plot_every_source: True
@@ -74,21 +80,26 @@ module_options:
     # What to annotate for outside mappings (in featurecounts the -g option)
     look_for: transcript_id
 
+    # What the column with exon would be
+    col2_name: transcript
+
   # SUMMARY: Summarize report in pdf format
-  SUMMARY:
-    bool: False
+  SUMMARY: True
+  
+  # Delete the working directory 
+  delete_working: True
 
 system_options:
   # Max number of cores to use
-  num_cores: 5
+  num_cores: 6
   # Keep this amount of memory free in G
-  mem_free: 12
+  mem_free: 2
 
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/working"
+  working_dir: "/Volumes/Extreme_SSD/a_thaliana/working"
   # Location of samples (ENSURE *.fastq.gz)
-  sample_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/samples"
+  sample_dir: "/Volumes/Extreme_SSD/a_thaliana/samples"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/out"
+  out_dir: "/Volumes/Extreme_SSD/a_thaliana/sno_out"

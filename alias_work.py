@@ -8,6 +8,7 @@ from basics import *
 #   - From different sources
 
 # Combine reference genomes
+# documented
 def ref_combine(fa1_name, fa2_name, out_name, reference):
     
     reference_nomen = pd.read_csv(reference, sep = "\t")
@@ -182,6 +183,21 @@ def bam_chr_extract(bam, out):
             chroms.append(line)
 
     return chroms
+
+# if used with fire, will print out a list
+def fasta_chr_extract(fasta):
+    chrs = []
+    
+    with open(fasta, "r") as seqs:
+        for line in seqs:
+            if line[0] == ">":
+                sep_line = line.split(sep = " ")
+
+                chr_name = sep_line[0]
+
+                chrs.append(chr_name)
+
+    return chrs
 
 if __name__ == '__main__':
   fire.Fire()

@@ -28,7 +28,7 @@ def create_lookup(gtf_file, seq_key, source_key,start, end, output, id_pre = "sd
 
             source_base = attributes[source_index + 1]
             source_base = source_base.replace('"', "")
-            source_base = source_base + "_" + strand
+            source_base = source_base + "__" + strand
 
             seq_length = len(seq)
             
@@ -38,7 +38,7 @@ def create_lookup(gtf_file, seq_key, source_key,start, end, output, id_pre = "sd
                 for i in range(0, seq_length - k):
                     segment = seq[i:i + k + 1]
 
-                    source = str(i + 1) + ";" + str(i + k + 1) + "_" + source_base + "_._" + str(i/seq_length)
+                    source = str(i + 1) + ";" + str(i + k + 1) + "__" + source_base + "__.__" + str(i/seq_length)
 
                     # Get 3p and 5p flanking sequences, auto six
 
@@ -73,6 +73,12 @@ def create_lookup(gtf_file, seq_key, source_key,start, end, output, id_pre = "sd
                             lookup_dict[segment][2] = lookup_dict[segment][2] + 1
     
     for key in lookup_dict:
+
+        # Skip if there are more than 300 sources
+        # Likely represents sequence of low complexity
+        if lookup_dict[key][1] > 300:
+            continue
+
         entry = []
 
         entry.append(key)
@@ -120,6 +126,8 @@ def create_lookup(gtf_file, seq_key, source_key,start, end, output, id_pre = "sd
     lookup_table["flanking3p"] = lookup_table["flanking3p"].str.upper()
 
     lookup_table = lookup_table.sort_values(by = ["sequence"])
+
+    lookup_table = lookup_table.loc[~lookup_table["sequence"].str.contains("N"),:]
 
     lookup_table["ID"] = lookup_table["sequence"].apply(lambda x: encode_sequence(x, id_pre))
 

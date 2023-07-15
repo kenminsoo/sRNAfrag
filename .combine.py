@@ -23,13 +23,13 @@ with open("samples_adapters.txt", "r") as samples:
     for line in samples:
         line_s = line.replace("\n", "")
 
-        csv = line_s + ".csv"
+        csv = line_s + ".tsv"
 
         csvs.append(csv)
 
 i = 1
 for csv in csvs:
-    cur = pd.read_csv(csv)
+    cur = pd.read_csv(csv, sep = "\t")
     
     if i == 1:
         combined = cur
@@ -42,7 +42,7 @@ combined = combined.fillna(0)
 
 combined[['flag','sequence']] = combined["sequence"].str.split('_', expand = True)
 
-combined['sequence'][combined['flag'] == "16"] = combined['sequence'][combined['flag'] == "16"].apply(rev_comp)
+combined = combined.loc[combined['flag'] != "16", :]
 
 lookup_table = pd.read_csv("sRNA_frag_lookup.csv")
 

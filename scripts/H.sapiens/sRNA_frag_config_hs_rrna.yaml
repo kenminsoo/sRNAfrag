@@ -41,7 +41,7 @@ module_options:
 
     # An annotation file to generate fragments from => Should be filtered with sequences
     annotation_options: 
-      location: "/Volumes/Extreme_SSD/h_sapiens/h.sapiens_snRNA_final.gtf"
+      location: "/Volumes/Extreme_SSD/h_sapiens/h.sapiens_rRNA_final.gtf"
     # Trim n number of bases from the 5' or 3' end during alignment
     trim5p3p:
       bool: False
@@ -60,12 +60,12 @@ module_options:
 
   # S1: Figure Set 1
   S1:
-    bool: False
+    bool: True
 
   # P2: Second Processing Module. Dependent on P1 and S1
   # Ensure that an index location is given in the P1 module before running P2
   P2: 
-    bool: False
+    bool: True
 
     # from ITAS publication
     # merged with snoDB
@@ -85,7 +85,7 @@ module_options:
   SUMMARY: True
   
   # Delete the working directory 
-  delete_working: False
+  delete_working: True
 
 system_options:
   # Max number of cores to use
@@ -96,8 +96,8 @@ system_options:
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Volumes/Extreme_SSD/h_sapiens/working_2"
+  working_dir: "/Volumes/Extreme_SSD/h_sapiens/working"
   # Location of samples (ENSURE *.fastq.gz)
   sample_dir: "/Volumes/Extreme_SSD/h_sapiens/samples"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/h_sapiens/sn_out_test"
+  out_dir: "/Volumes/Extreme_SSD/h_sapiens/r_out"

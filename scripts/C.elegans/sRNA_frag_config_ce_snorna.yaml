@@ -17,7 +17,7 @@ module_options:
     
     # Naming Prefix i.e. if fragment then fragment_licenseplate
     # License plates are generated using MINTplates script based on sequence
-    prefix: hg38
+    prefix: cel235
 
     # Build new index in working dir
     build_index:
@@ -25,26 +25,24 @@ module_options:
       reference_location: 
 
     # Prebuilt index location (required if Build_index is false)
-    built_index_location: "/Volumes/Extreme_SSD/h_sapiens/hg38"
+    built_index_location: "/Volumes/Extreme_SSD/c_elegans/cel235"
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
-    # for our cell line samples, UMIs and Adapters are already removed.
-    # We add adapter trimming time from 9 core run.
     umi_removal:
       bool: False
       regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
     
     # Remove Adapters, Default is Illumina universal
     adapter_removal:
-      bool: False
-      sequence: AGATCGGAAGAG
+      bool: True
+      sequence: TGGAATTCTCGGGTGCCAAGG
 
     # An annotation file to generate fragments from => Should be filtered with sequences
     annotation_options: 
-      location: "/Volumes/Extreme_SSD/h_sapiens/h.sapiens_snRNA_final.gtf"
+      location: "/Volumes/Extreme_SSD/c_elegans/cel235_snoRNA_final.gtf"
     # Trim n number of bases from the 5' or 3' end during alignment
     trim5p3p:
-      bool: False
+      bool: True
       p5: 4
       p3: 4
 
@@ -60,16 +58,14 @@ module_options:
 
   # S1: Figure Set 1
   S1:
-    bool: False
+    bool: True
 
   # P2: Second Processing Module. Dependent on P1 and S1
   # Ensure that an index location is given in the P1 module before running P2
   P2: 
-    bool: False
+    bool: True
 
-    # from ITAS publication
-    # merged with snoDB
-    annotation_file: /Volumes/Extreme_SSD/h_sapiens/SPRMT_hg38_031323.gtf
+    annotation_file: /Volumes/Extreme_SSD/c_elegans/cel235_3.gtf
 
     # Plot counts vs. fragment location on every souce transcript
     plot_every_source: True
@@ -78,26 +74,26 @@ module_options:
     look_for: transcript_id
 
     # What the column with exon would be
-    col2_name: exon
+    col2_name: transcript
 
 
   # SUMMARY: Summarize report in pdf format
   SUMMARY: True
   
   # Delete the working directory 
-  delete_working: False
+  delete_working: True
 
 system_options:
   # Max number of cores to use
-  num_cores: 9
+  num_cores: 6
   # Keep this amount of memory free in G
   mem_free: 2
 
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Volumes/Extreme_SSD/h_sapiens/working_2"
+  working_dir: "/Volumes/Extreme_SSD/c_elegans/working"
   # Location of samples (ENSURE *.fastq.gz)
-  sample_dir: "/Volumes/Extreme_SSD/h_sapiens/samples"
+  sample_dir: "/Volumes/Extreme_SSD/c_elegans/samples"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/h_sapiens/sn_out_test"
+  out_dir: "/Volumes/Extreme_SSD/c_elegans/sno_out"
