@@ -2,7 +2,7 @@
 
 # First start with R packages
 
-sh install_R.sh
+Rscript install.R
 
 echo "R packages installed."
 
@@ -17,3 +17,5 @@ echo "conda installable packages, installed"
 pip install -r requirements.txt
 
 echo "pip installable packages, installed"
+
+pwd > install_wd.txt

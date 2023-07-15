@@ -19,3 +19,5 @@ install_version("tidyverse", version = "2.0.0", repos = "http://cran.us.r-projec
 install_version("ggpmisc", version = "0.5.2", repos = "http://cran.us.r-project.org")
 install_version("ggpp", version = "0.5.2", repos = "http://cran.us.r-project.org")
 install_version("ggplot2", version = "3.4.2", repos = "http://cran.us.r-project.org")
+
+devtools::install_github("omarwagih/ggseqlogo")
