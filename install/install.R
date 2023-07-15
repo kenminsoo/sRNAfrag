@@ -1,6 +1,6 @@
 .libPaths( c( "./sRNA_packages_R" , .libPaths() ))
 
-install.packages("devtools")
+install.packages("devtools", repos='http://cran.us.r-project.org')
 require("devtools")
 
 install_version("webshot2", version = "0.1.0", repos = "http://cran.us.r-project.org")
