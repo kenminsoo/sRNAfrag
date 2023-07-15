@@ -5,6 +5,12 @@ channels:
   - bioconda
   - defaults
 dependencies:
+  - networkx=3.1
+  - umi_tools=1.1.4
+  - statsmodels=0.14.0
+  - regex=2023.5.5
+  - pip=23.0
+  - grep=3.11
   - adapterremoval=2.3.3
   - pyyaml=6.0
   - yaml=0.2.5
@@ -25,6 +31,7 @@ dependencies:
   - matplotlib-inline=0.1.6
   - seaborn=0.12.2
   - seaborn-base=0.12.2
+  - parallel
   - pip:
       - brotli==1.0.9
       - cssselect2==0.7.0
