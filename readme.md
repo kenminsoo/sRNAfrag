@@ -24,6 +24,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## Overview
+Welcome to our sRNAfrag github repo. sRNAfrag is a pipeline that analyzes small RNA fragmentation in small RNA-seq data. On this page, installation and basic usage can be found. Please consult the wiki attached to this repo for more information. 
+
+## Installation & Environment
+sRNAfrag was developed with R version 4.1.3 and Python 3.10.0. It was developed on MacOS Monterey 12.2.1 M1 64GB, and tested on CentOS Linux 7 (3.10.0-1160.92.1.el7.x86_64) with 6 cores and 32 GB of memory on R 4.2.1. 
+
+### Prerequisite
+Install R, please consult their website. [R](https://cran.r-project.org/)
+
+Install conda, please consult their website. [Conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
+
+### Quick Install
+The quick install process takes approximately 20 minutes.
+```
+git clone https://github.com/kenminsoo/sRNAfrag
+cd sRNAfrag/install
+sh easy_install.sh
+```
+
+## Test Run
+To test if the dependencies of sRNAfrag were install properly, please run:
+
+
+
 ## Contents
 1) Pipeline Usage
 2) Scripts to work with GTF File
