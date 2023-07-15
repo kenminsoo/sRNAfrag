@@ -1,5 +1,5 @@
-install.packages(devtools)
-require(devtools)
+install.packages("devtools")
+require("devtools")
 
 install_version("webshot2", version = "0.1.0", repos = "http://cran.us.r-project.org")
 install_version("gt", version = "0.9.0", repos = "http://cran.us.r-project.org")
