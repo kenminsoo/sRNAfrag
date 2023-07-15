@@ -1,4 +1,4 @@
-.libPaths( c( "./sRNA_packages" , .libPaths() ))
+.libPaths( c( "./sRNA_packages_R" , .libPaths() ))
 
 install.packages("devtools")
 require("devtools")
