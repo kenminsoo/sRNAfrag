@@ -874,6 +874,8 @@ def compare_merged(dictionary_of_counts, output):
                heatmap_df.loc[item2, item3] += 1
          
    fig_name = output.replace(".csv", "")
+   fig_name_split = fig_name.split(sep ='/')
+   fig_name = fig_name_split[-1]
 
    sns.heatmap(heatmap_df)
    plt.title("Number of Shared Sequences - " + fig_name)
