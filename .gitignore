@@ -12,7 +12,6 @@ SPRMT_merge_031323_seq.gtf
 *.bed
 *.sam
 *.fasta
-*.txt
 .Rdata
 .Rhistory
 *.bt2
