@@ -7,7 +7,7 @@ channels:
 dependencies:
   - pip=23.0
   - grep=3.11
-  - python=3.9
+  - python=3.8
   - umi_tools=1.1.4
   - adapterremoval=2.3.3
   - bedtools=2.30.0
