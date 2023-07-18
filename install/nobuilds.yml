@@ -1,15 +1,20 @@
-name: sRNAfrag
+name: gtf_work
 channels:
   - anaconda
   - conda-forge
   - bioconda
   - defaults
 dependencies:
+  - adapterremoval=2.3.3
   - appnope=0.1.3
   - asttokens=2.2.1
   - backcall=0.2.0
   - backports=1.0
   - backports.functools_lru_cache=1.6.4
+  - 
+  - biopython=1.81
+  - bowtie=1.3.1
+  - bowtie2=2.5.1
   - brotli-bin=1.0.9
   - bzip2=1.0.8
   - c-ares=1.18.1
@@ -20,12 +25,16 @@ dependencies:
   - charset-normalizer=3.1.0
   - comm=0.1.3
   - contourpy=1.0.7
+  - cutadapt=4.4
   - cycler=0.11.0
   - debugpy=1.6.7
   - decorator=5.1.1
   - dnaio=0.10.0
   - executing=1.2.0
   - expat=2.5.0
+  - fastqc=0.12.1
+  - fastx_toolkit=0.0.14
+  - fire=0.5.0
   - font-ttf-dejavu-sans-mono=2.37
   - font-ttf-inconsolata=3.000
   - font-ttf-source-code-pro=2.038
@@ -42,9 +51,11 @@ dependencies:
   - glib-tools=2.76.3
   - gnuplot=5.4.8
   - graphite2=1.3.13
+  - grep=3.11
   - gst-plugins-base=1.22.4
   - gstreamer=1.22.4
   - harfbuzz=6.0.0
+  - hisat2=2.2.1
   - icu=70.1
   - idna=3.4
   - importlib-metadata=6.6.0
@@ -74,6 +85,7 @@ dependencies:
   - libexpat=2.5.0
   - libffi=3.4.2
   - libgd=2.3.3
+  - libgfortran=5.0.0
   - libgfortran5=11.3.0
   - libglib=2.76.3
   - libgtextutils=0.7
@@ -96,17 +108,22 @@ dependencies:
   - libxcb=1.13
   - libzlib=1.2.13
   - llvm-openmp=15.0.7
+  - matplotlib-base=3.7.1
+  - matplotlib-inline=0.1.6
   - munkres=1.0.7
   - mysql-common=8.0.33
   - mysql-libs=8.0.33
   - ncurses=6.4
   - nest-asyncio=1.5.6
+  - networkx=3.1
   - nspr=4.35
   - nss=3.89
+  - numpy=1.24.2
   - openjdk=11.0.15
   - openjpeg=2.5.0
   - openssl=3.1.1
   - packaging=23.1
+  - pandas=1.5.3
   - pango=1.50.14
   - parso=0.8.3
   - patsy=0.5.3
@@ -122,6 +139,7 @@ dependencies:
   - pickleshare=0.7.5
   - pigz=2.6
   - pillow=9.2.0
+  - pip=23.0
   - pixman=0.40.0
   - platformdirs=3.5.1
   - pooch=1.7.0
@@ -131,6 +149,7 @@ dependencies:
   - pthread-stubs=0.4
   - ptyprocess=0.7.0
   - pure_eval=0.2.2
+  - pybedtools=0.9.0
   - pybktree=1.1
   - pycparser=2.21
   - pygments=2.15.1
@@ -142,15 +161,20 @@ dependencies:
   - python-isal=1.1.0
   - python_abi=3.10
   - pytz=2022.7.1
+  - pyyaml=6.0
   - pyzmq=25.0.2
   - qt-main=5.15.8
   - readline=8.2
+  - regex=2023.5.5
   - requests=2.31.0
   - scipy=1.10.1
+  - seaborn=0.12.2
+  - seaborn-base=0.12.2
   - setuptools=67.3.2
   - six=1.16.0
   - sqlite=3.40.0
   - stack_data=0.6.2
+  - statsmodels=0.14.0
   - subread=2.0.3
   - tbb=2021.9.0
   - termcolor=2.3.0
@@ -160,6 +184,7 @@ dependencies:
   - typing-extensions=4.5.0
   - typing_extensions=4.5.0
   - tzdata=2022g
+  - umi_tools=1.1.4
   - unicodedata2=15.0.0
   - urllib3=2.0.2
   - util-linux=2.38.1
@@ -169,12 +194,12 @@ dependencies:
   - xorg-libxau=1.0.11
   - xorg-libxdmcp=1.1.3
   - xz=5.2.6
+  - yaml=0.2.5
   - zeromq=4.3.4
   - zipp=3.15.0
   - zlib=1.2.13
   - zstandard=0.19.0
   - zstd=1.5.2
-  - parallel
   - pip:
       - brotli==1.0.9
       - cssselect2==0.7.0
@@ -191,3 +216,4 @@ dependencies:
       - webencodings==0.5.1
       - yarg==0.1.9
       - zopfli==0.2.2
+prefix: /Users/kenminsoo/opt/anaconda3/envs/gtf_work
