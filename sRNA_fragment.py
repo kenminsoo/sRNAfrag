@@ -11,8 +11,6 @@ with open("sRNA_frag_config.yaml", "r") as file:
 
 ## -- Config Variables -- ##
 
-os.system('parallel --citation')
-
 P1_bool = config_vars['module_options']['P1']['bool']
 
 S1_bool = config_vars['module_options']['S1']['bool']

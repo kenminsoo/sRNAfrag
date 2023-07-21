@@ -1,4 +1,4 @@
-# sRNAfrag - A Pipeline to Analyze Fragmentation in smRNA-seq data 
+# sRNAfrag - A Pipeline to Analyze Fragmentation in sRNA-seq data 
 
 ```
 MIT License
@@ -38,13 +38,13 @@ To accomodate for HPC use, we created a container.
 ### **Installing with Conda**
 
 #### *Compatible Systems*
-MAC-OS ARM64 (Tested)
-
 MAC-OS x86_64
 
 UBUNTU x86_64
 
-Will not work on UBUNTU ARM64 systems and is mostly dependent upon bioconda having package downloads with versions for your system. Will also not play well on HPC clusters. 
+IF you are working on an ARM infrastructure, please download the x86_64 version of Conda. Tested on MAC-OS ARM (M1) infrasturcture. 
+
+Will not play well on HPC clusters. 
 
 #### Prerequisite
 Install R, please consult their website. [R](https://cran.r-project.org/)
@@ -104,6 +104,8 @@ python sRNA_fragment.py \\ Runs pipeline
 ## Config Variables
 
 NOTE! All directories must not be ended with a `/` (i.e. `X/Y/Z` and not `X/Y/Z/`)
+NOTE!! Make sure there is a space between the colon and your entry.
+NOTE!!! While not required, it is best to put strings in quotations.
 
 module_options:
 
