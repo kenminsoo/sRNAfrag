@@ -28,25 +28,156 @@ SOFTWARE.
 Welcome to our sRNAfrag github repo. sRNAfrag is a pipeline that analyzes small RNA fragmentation in small RNA-seq data. On this page, installation and basic usage can be found. Please consult the wiki attached to this repo for more information. 
 
 ## Installation & Environment
-sRNAfrag was developed with R version 4.1.3 and Python 3.10.0. It was developed on MacOS Monterey 12.2.1 M1 64GB, and tested on CentOS Linux 7 (3.10.0-1160.92.1.el7.x86_64) with 6 cores and 32 GB of memory on R 4.2.1. 
+sRNAfrag was developed with R version 4.1.3 and Python 3.10.0. It was developed on MacOS Monterey 12.2.1 M1 64GB, and tested on the same computer. 
 
-### Prerequisite
+The singularity container was tested on a CentOS Linux 7 (3.10.0-1160.92.1.el7.x86_64) system with 6 cores and 32 GB of memory. 
+
+### **Running with Singularity Container**
+To accomodate for HPC use, we created a container. 
+
+### **Installing with Conda**
+
+#### *Compatible Systems*
+MAC-OS ARM64 (Tested)
+
+MAC-OS x86_64
+
+UBUNTU x86_64
+
+Will not work on UBUNTU ARM64 systems and is mostly dependent upon bioconda having package downloads with versions for your system. Will also not play well on HPC clusters. 
+
+#### Prerequisite
 Install R, please consult their website. [R](https://cran.r-project.org/)
 
 Install conda, please consult their website. [Conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
 
-### Quick Install
-The quick install process takes approximately 20 minutes.
+The quick install process takes approximately 20 minutes and will test for successful installation. Run the following commands to install.
 ```
 git clone https://github.com/kenminsoo/sRNAfrag
 cd sRNAfrag/install
 sh easy_install.sh
 ```
+This creates a conda environment that has all the required package. This makes it easy to use as all functions can be accessed from the command line in accordance with the documentation. 
 
-## Test Run
-To test if the dependencies of sRNAfrag were install properly, please run:
+Please check the `install/test_results/out/tables` directory after the install. There should be 7 tables. 
 
+### **Installing Dependencies Manually**
 
+All python dependencies can be found in the "install" directory in the `requirements_conda.yml` file. There is a list of pip dependencies that could be moved into a requirements.txt file for easy install with the users pip package manager.
+
+In the same directory, the `easy_install.sh` file has a list of all packages that should be added to your path. These are installed using conda one at a time because it resolves the environment at a much higher speed than installing all of them at once. 
+
+## Testing The Pipeline
+If sRNAfrag is installed using `quick_install.sh` it will run this test automatically. 
+
+If you would like to test this pipeline after manually installing dependencies or running in the singularity container:
+
+```
+cd install
+sh test_pipeline.sh
+```
+
+*THIS WILL OVERRIDE YOUR CURRENT sRNA_frag_config.yaml FILE!*
+
+## Basic Usage
+1. Modify the sRNA_frag_config.yaml file to fit your needs. 
+
+2. If you would like to find out of space maps (an important component, in my opinion) please build an index with your reference genome.
+```
+bowtie-build <ref_genome> <prefix>
+```
+
+3. Add the path to the YAML file in the P2 section: `/ref/index/loc/prefix`
+
+4. Ensure that all fastq files are gzipped.
+```
+cd sample_dir
+gzip *.fastq
+```
+
+5. Then run
+```
+cd sRNAfrag  \\ installed dir
+python sRNA_fragment.py \\ Runs pipeline
+```
+
+## Config Variables
+
+NOTE! All directories must not be ended with a `/` (i.e. `X/Y/Z` and not `X/Y/Z/`)
+
+module_options:
+
+  P1:
+
+    bool: Set as true of fasle depending on if you want to run this module.
+
+    prefix: A prefix for all IDs assigned to fragments.
+
+    umi_removal: Uses regex and the unique method from UMI tools. 
+      bool: Set true if want to remove Qiagen UMI.
+      regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
+    
+    adapter_removal: Uses AdapterRemoval to remove adapters.
+      bool: Set true if want to remove adapters.
+      sequence: Provide adapter sequence. 
+
+    annotation_options: This takes in the processed annotation files that can be found in the scripts directory. 
+      location: "Give the full path to the location of the processed annotation file"
+    
+    trim5p3p: Trim n5 or n3 nucleotides off the 5p or 3p end during bowtie alignment.
+      bool: Set True if want to trim off 5p or 3p end. 
+      p5: n5
+      p3: n3
+
+    min: Minimum fragment length (integer)
+    max: Maximum fragment length (integer)
+
+    fastqc: Run the fastQC quality check modules on first 2MB of data. 
+
+      bool: Set True if want to run quality checks.
+
+      pause: Set True if want to pause pipeline to check if QC looks OK. 
+      Note: Will automatically stop if it detects adapter presence if adapter removal was set to true. 
+
+  ### S1:
+
+    bool: Set as True or False depending on if you want to run this module. Note that P2 will not run without this. 
+
+  ### P2: 
+
+    bool: Set as True or False depending on if you want to run this module.
+
+    annotation_file: Give an annotation file for any transcripts you want to look for in OUT-OF-SPACE maps. Used only if find_out_bool is true. 
+    NOTE: The annotation file is anti-joined with the filtered/processed annotation file. It should have the same primary key such that the pipeline can filter out matches that are of the correct biotype OR it should be an annotation file that has been filtered for the biotypes you are NOT looking for. 
+    
+    find_out_bool: Set True if want to find out-of-space maps. (Non-biotype matches)
+
+    built_index_location: Give the locaton of the built index. Must be done prior to running pipeline. 
+
+    plot_every_source: Plot both cluster regions and counts (relative to loci) for every potential source.
+
+    look_for: The attribute in the annotation_file to look for. (i.e. transcript_id or biotype)
+
+    col2_name: The value in the second column to look for. (i.e. exon or transcript)
+
+  SUMMARY: Generate a summary report.
+  NOTE: Output is an HTML file that is dependent upon the file structure. If you'd like to save the HTML report, please save it as a PDF from your browser. 
+  
+  delete_working: Delete the working directory. Would reccomend since it takes up a lot of space. 
+
+### **system_options:**
+
+    num_cores: Maximum number of cores to use or jobs to run.
+
+    mem_free: Keep this amount of gigabytes free (i.e. 12G)
+
+### **dir_locations:**
+
+    working_dir: Path to working directory. Please give full path. Will create if doesn't exist.
+
+    sample_dir: Path to sample directory. Please give full path and ensure samples are gzipped with extension, "fastq.gz".
+
+    out_dir: Path to out directory. Please give full path. Will create if doesn't exist.
 
 ## Contents
 1) Pipeline Usage

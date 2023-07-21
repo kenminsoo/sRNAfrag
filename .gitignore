@@ -3,7 +3,6 @@ RNA_central/
 SPRMT_merge_031323_seq.gtf
 *.fa
 *.fai
-*.gtf
 *.tsv 
 .Rproj.user
 *.bed

@@ -11,7 +11,7 @@ with open("sRNA_frag_config.yaml", "r") as file:
 
 ## -- Config Variables -- ##
 
-P0_bool = config_vars['module_options']['P0']['bool']
+os.system('parallel --citation')
 
 P1_bool = config_vars['module_options']['P1']['bool']
 
@@ -22,31 +22,14 @@ P2_bool = config_vars['module_options']['P2']['bool']
 out_dir = config_vars['dir_locations']['out_dir']
 working_dir = config_vars["dir_locations"]["working_dir"]
 
-build_bool = config_vars["module_options"]["P1"]["build_index"]["bool"]
-reference_genome = config_vars["module_options"]["P1"]["build_index"]["reference_location"]
-
 delete_working = config_vars['module_options']["delete_working"]
 
 make_summary = config_vars["module_options"]["SUMMARY"]
 
 ## -- Config Variables -- ##
 
-# Build an index if needed
-
-if build_bool == True:
-    if reference_genome is None or reference_genome == "":
-        raise ValueError("Reference location required if build index is TRUE.")
-    elif os.path.isfile(reference_genome) == False:
-        raise ValueError("Invalid path for build_index reference_location. (check YAML config)")
-
-    os.system("cd " + working_dir + ";\
-            bowtie-build " + reference_genome + " fragmentation_pipeline")
-
-if P0_bool == True:
-    os.system("python sRNA_fragment_P0_basic.py")
-
 if P1_bool == True:
-    os.system("python sRNA_fragment_P1_v2_timed.py")
+    os.system("python sRNA_fragment_P1.py")
 
 if S1_bool == True:
     os.system("cp .S1_figures.R " + out_dir + ";\
@@ -59,14 +42,14 @@ if P2_bool == True:
     os.system("cp .add_prefix_outspace.sh " + working_dir + "/aligned_sams")
 
     os.system("cp sRNA_frag_config.yaml " + out_dir + ";\
-            cp sRNA_fragment_P2_timed.py " + out_dir + ";\
+            cp sRNA_fragment_P2.py " + out_dir + ";\
             cp gtf_groundtruth.py " + out_dir + ";\
             cp gtf_modifiers.py " + out_dir + ";\
             cp conversion_tools.py " + out_dir + ";\
             cp alias_work.py " + out_dir + ";\
             cp basics.py " + out_dir + ";\
                 cd " + out_dir + ";\
-                    python sRNA_fragment_P2_timed.py")
+                    python sRNA_fragment_P2.py")
 
 # Clean up Module
 if P1_bool == True:

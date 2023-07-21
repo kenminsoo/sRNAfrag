@@ -24,9 +24,6 @@ working_dir = config_vars["dir_locations"]["working_dir"]
 # Sample directory
 sample_dir = config_vars["dir_locations"]["sample_dir"]
 
-# Alignment index name or location
-index_name = config_vars["module_options"]["P1"]["built_index_location"]
-
 # Out directory with all final files
 out_dir = config_vars["dir_locations"]["out_dir"]
 

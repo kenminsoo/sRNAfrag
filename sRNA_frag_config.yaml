@@ -3,13 +3,6 @@
 # See documentation for more information on module functions
 # Mark true to run module
 module_options:
-  # P0: GTF preparation module
-  # If more prep is needed, use CLI to work with GTF file. 
-  P0:
-    # Run the basic GTF preparation workflow.
-    # Assumed that the GTF is filtered for one biotype
-    bool: False
-  
   # P1: Standard Processing Module, Pre-Processing & Alignment
   P1:
     # Run P1
@@ -18,14 +11,6 @@ module_options:
     # Naming Prefix i.e. if fragment then fragment_licenseplate
     # License plates are generated using MINTplates script based on sequence
     prefix: hg38
-
-    # Build new index in working dir
-    build_index:
-      bool: False
-      reference_location: 
-
-    # Prebuilt index location (required if Build_index is false)
-    built_index_location: "/Volumes/Extreme_SSD/h_sapiens/hg38"
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
     # for our cell line samples, UMIs and Adapters are already removed.
@@ -41,7 +26,8 @@ module_options:
 
     # An annotation file to generate fragments from => Should be filtered with sequences
     annotation_options: 
-      location: "/Volumes/Extreme_SSD/h_sapiens/h.sapiens_snRNA_final.gtf"
+      location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/scripts/H.sapiens/h.sapiens_snoRNA_final.gtf"
+    
     # Trim n number of bases from the 5' or 3' end during alignment
     trim5p3p:
       bool: False
@@ -60,16 +46,22 @@ module_options:
 
   # S1: Figure Set 1
   S1:
-    bool: False
+    bool: True
 
   # P2: Second Processing Module. Dependent on P1 and S1
   # Ensure that an index location is given in the P1 module before running P2
   P2: 
-    bool: False
+    bool: True
 
     # from ITAS publication
     # merged with snoDB
-    annotation_file: /Volumes/Extreme_SSD/h_sapiens/SPRMT_hg38_031323.gtf
+    annotation_file: ""
+    
+    # Find out of space maps
+    find_out_bool: False
+
+    # Indexed reference genome for out of space maps
+    built_index_location: ""
 
     # Plot counts vs. fragment location on every souce transcript
     plot_every_source: True
@@ -85,7 +77,7 @@ module_options:
   SUMMARY: True
   
   # Delete the working directory 
-  delete_working: False
+  delete_working: True
 
 system_options:
   # Max number of cores to use
@@ -96,8 +88,8 @@ system_options:
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Volumes/Extreme_SSD/h_sapiens/working_2"
+  working_dir: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/install/test_results/working"
   # Location of samples (ENSURE *.fastq.gz)
-  sample_dir: "/Volumes/Extreme_SSD/h_sapiens/samples"
+  sample_dir: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/install/test_data"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/h_sapiens/sn_out_test"
+  out_dir: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/install/test_results/out"

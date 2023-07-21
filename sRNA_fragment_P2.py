@@ -20,8 +20,8 @@ with open("sRNA_frag_config.yaml", "r") as file:
 working_dir = config_vars["dir_locations"]["working_dir"]
 out_dir = config_vars["dir_locations"]["out_dir"]
 
-# Reference genome location
-indexed = config_vars["module_options"]["P1"]["built_index_location"]
+# Index location
+indexed = config_vars["module_options"]["P2"]["built_index_location"]
 
 # Attribute Choice => What to look for, biotype? transcript IDS?
 attribute_choice = config_vars["module_options"]["P2"]["look_for"]
@@ -39,6 +39,9 @@ make_lots = config_vars["module_options"]["P2"]["plot_every_source"]
 
 # Prefix
 prefix = config_vars["module_options"]["P1"]["prefix"]
+
+# Find out-of-space maps
+out_of_space_bool = config_vars["module_options"]["P2"]["find_out_bool"]
 
 ## -- Config End -- ##
 
@@ -615,217 +618,248 @@ counts_table = joined_data.iloc[:,[new_id_index] + list(range(1, end_index))]
 sum_table = counts_table.groupby("new_id").agg(sum)
 sum_table = sum_table.reset_index()
 
-## == ## Detection of outside mapping ## == ##
-num = list(counts_dataset.columns).index("ID")
+if out_of_space_bool:
 
-tsv_to_fasta(out_dir + "/filtered_corrected_counts.csv", "filtered_sequences.fa",num, 0, delim = ",")
+    ## == ## Detection of outside mapping ## == ##
+    num = list(counts_dataset.columns).index("ID")
 
-bowtie_align_pipeline(indexed, working_dir, out_dir + "/filtered_sequences.fa")
+    tsv_to_fasta(out_dir + "/filtered_corrected_counts.csv", "filtered_sequences.fa",num, 0, delim = ",")
 
-gtf_anti_join(full_annotation, processed_annotation_file, "transcript_id", "anti_joined.gtf")
+    bowtie_align_pipeline(indexed, working_dir, out_dir + "/filtered_sequences.fa")
 
-# move antijoined file
-os.system('cd ' + out_dir + ";\
-          mv anti_joined.gtf " + working_dir)
+    gtf_anti_join(full_annotation, processed_annotation_file, "transcript_id", "anti_joined.gtf")
 
-# Take out unaligned reads
-os.system('cd ' + working_dir + "; \
-            grep '	0	' lookup_filtered.sam | cut -f 1,2 |  awk -v OFS=',' '{print $1, $2}' | sort | uniq > all_reads.csv;\
-            grep ',4' all_reads.csv > nomatches.csv;\
-            grep ',0' all_reads.csv | cut -d , -f 1 > matches.txt;\
-            grep ',16' all_reads.csv | cut -d , -f 1 >> matches.txt;\
-            cat matches.txt | sort | uniq > matches_uniq.txt;\
-            mkdir aligned_sams;\
-            cat matches_uniq.txt | parallel 'grep @ lookup_filtered.sam > aligned_sams/{}.sam';\
-            cat matches_uniq.txt | parallel 'grep {} lookup_filtered.sam >> aligned_sams/{}.sam'")
+    # move antijoined file
+    os.system('cd ' + out_dir + ";\
+            mv anti_joined.gtf " + working_dir)
 
-all_sams = os.listdir(working_dir + "/aligned_sams")
-
-lotta_files_man = 1
-lotta_files_man_counter = 1
-
-if len(all_sams) < 8000:
+    # Take out unaligned reads
     os.system('cd ' + working_dir + "; \
-              featureCounts -a anti_joined.gtf -F 'GTF' -g " + attribute_choice + " -t " + midcol + " -o matches.tsv aligned_sams/*.sam -O -M")
+                grep '	0	' lookup_filtered.sam | cut -f 1,2 |  awk -v OFS=',' '{print $1, $2}' | sort | uniq > all_reads.csv;\
+                grep ',4' all_reads.csv > nomatches.csv;\
+                grep ',0' all_reads.csv | cut -d , -f 1 > matches.txt;\
+                grep ',16' all_reads.csv | cut -d , -f 1 >> matches.txt;\
+                cat matches.txt | sort | uniq > matches_uniq.txt;\
+                mkdir aligned_sams;\
+                cat matches_uniq.txt | parallel 'grep @ lookup_filtered.sam > aligned_sams/{}.sam';\
+                cat matches_uniq.txt | parallel 'grep {} lookup_filtered.sam >> aligned_sams/{}.sam'")
 
+    all_sams = os.listdir(working_dir + "/aligned_sams")
+
+    lotta_files_man = 1
+    lotta_files_man_counter = 1
+
+    if len(all_sams) < 8000:
+        os.system('cd ' + working_dir + "; \
+                featureCounts -a anti_joined.gtf -F 'GTF' -g " + attribute_choice + " -t " + midcol + " -o matches.tsv aligned_sams/*.sam -O -M")
+
+    else:
+        # create dictionary of merged and original ids
+        merged_orig = defaultdict(list)
+        for row in ref_table.iterrows():
+            items = list(row[1])
+            
+            orig_plate = items[0]
+            new_plate = items[1]
+            
+            merged_orig[new_plate].append(orig_plate)
+            
+        num_clusters = len(merged_orig)
+
+        num_to_sample = 8000 / num_clusters
+
+        set_of_samples = set()
+
+        if num_to_sample >= 1:
+            while len(set_of_samples) < 8000:
+                for key in merged_orig:
+                    set_of_samples.add(random.choice(merged_orig[key]))
+
+        os.system("mkdir " + working_dir + "/sampled_sams")
+
+        for sample in set_of_samples:
+
+            os.system("mv " + working_dir + "/aligned_sams/" + sample + ".sam " + working_dir + "/sampled_sams")
+
+        os.system('cd ' + working_dir + "; \
+                featureCounts -a anti_joined.gtf -F 'GTF' -g " + attribute_choice + " -t " + midcol + " -o matches.tsv sampled_sams/*.sam -O -M")
+
+    matches_df = pd.read_csv(working_dir + "/matches.tsv", sep = "\t", skiprows = 1)
+
+    matches_df = matches_df.drop(["Chr", "Start", "End", "Strand", "Length"], axis = 1)
+
+    summary_df = pd.read_csv(working_dir + "/matches.tsv.summary", sep = "\t", nrows = 1)
+
+    # Find out where the aligned reads mapped to
+
+    matches_df = matches_df.set_index("Geneid")
+
+    ids = list(matches_df.columns)
+
+    ids_clean = [n.replace("aligned_sams/", "") for n in ids]
+
+    if len(all_sams) >= 8000:
+        ids_clean = [n.replace("sampled_sams/", "") for n in ids]
+
+    ids_clean2 = [n.replace(".sam", "") for n in ids_clean]
+
+    annotation_df_to_join = {"id":ids_clean2}
+
+    # We only imported the first row
+    for row in summary_df.iterrows():
+        assigned_list = list(row[1])
+        
+    assigned_list.pop(0)
+
+    status = []
+    anno = []
+
+    i = 0
+
+    geneids = list(matches_df.index)
+
+    if len(all_sams) >= 8000:
+        for item in assigned_list:
+            if item == 0:
+                status.append(True)
+                
+                anno.append("")
+                
+            else:
+                status.append(True)
+                
+                id_name = ids_clean2[i]
+                
+                columnwithdata= matches_df["sampled_sams/"+ id_name + ".sam"]
+                
+                index_list = columnwithdata.to_numpy().nonzero()[0].tolist()
+                
+                storage_gene = []
+                
+                for indx in index_list:
+                    geneid = geneids[indx]
+                    
+                    storage_gene.append(geneid)
+                    
+                entry_to_add = ";".join(storage_gene)
+                
+                anno.append(entry_to_add)
+                
+            i += 1
+    else:
+        for item in assigned_list:
+            if item == 0:
+                status.append(True)
+                
+                anno.append("")
+                
+            else:
+                status.append(True)
+                
+                id_name = ids_clean2[i]
+                
+                columnwithdata= matches_df["aligned_sams/"+ id_name + ".sam"]
+                
+                index_list = columnwithdata.to_numpy().nonzero()[0].tolist()
+                
+                storage_gene = []
+                
+                for indx in index_list:
+                    geneid = geneids[indx]
+                    
+                    storage_gene.append(geneid)
+                    
+                entry_to_add = ";".join(storage_gene)
+                
+                anno.append(entry_to_add)
+                
+            i += 1
+
+    annotation_df_to_join.update({"annotation":anno})
+
+    converted_df_an = pd.DataFrame.from_dict(annotation_df_to_join)
+
+    annotated_ref_table = ref_table.join(converted_df_an.set_index("id"), on = "original_id", how = "left")
+
+    annotated_ref_table.to_csv("annotated_ref_table.csv", index = False)
+
+    # The final component of this script is to call sets of license plates
+    # that associate with each fragment
+    # this will allow for some cool stuff to be done
+    # once other species are investigated
+    # i think the mintmap code can be modified to include
+    # some degree of similarity
+    # Also, will include if it is flagged as an out of 
+    # biotype mapping (just identified i guess)
+
+    col_constructor_orig = []
+    col_constructor_outside = []
+    for row in sum_table.iterrows():
+        # each row will have a unique value
+        row_data = list(row[1])
+
+        # get the merged id
+        merged_id = row_data[0]
+
+        # get all rows that have 
+        orig_ids = annotated_ref_table.loc[annotated_ref_table["new_id"] == merged_id,"original_id"]
+        orig_ids_list = list(orig_ids)
+
+        # outside maps
+        outside_maps = annotated_ref_table.loc[annotated_ref_table["new_id"] == merged_id, "annotation"]
+        outside_maps = set(outside_maps)
+
+        if np.nan in outside_maps:
+            outside_maps.remove(np.nan)
+
+        # split up based on - so we have a list of license plates
+        license_plates = [n.split(sep = "-")[-2:] for n in orig_ids_list]
+
+        # make into one string
+        license_plates_clean = ["-".join(n) for n in license_plates]
+
+        col_constructor_orig.append(license_plates_clean)
+        col_constructor_outside.append(outside_maps)
+
+        # we will add this list to the sum table and export
+
+    sum_table_ann = sum_table
+    sum_table_ann["original_id_set"] = col_constructor_orig
+    sum_table_ann["outside_maps"] = col_constructor_outside
+
+    sum_table_ann.to_csv("merged_counts.csv", index = False)
+
+    os.system("mv merged_counts.csv " + out_dir)
+
+# If no out of space maps
+# We will just output the sum table with only the id set
 else:
-    # create dictionary of merged and original ids
-    merged_orig = defaultdict(list)
-    for row in ref_table.iterrows():
-        items = list(row[1])
-        
-        orig_plate = items[0]
-        new_plate = items[1]
-        
-        merged_orig[new_plate].append(orig_plate)
-        
-    num_clusters = len(merged_orig)
+    col_constructor_orig = []
+    for row in sum_table.iterrows():
+        # each row will have a unique value
+        row_data = list(row[1])
 
-    num_to_sample = 8000 / num_clusters
+        # get the merged id
+        merged_id = row_data[0]
 
-    set_of_samples = set()
+        # get all rows that have 
+        orig_ids = ref_table.loc[ref_table["new_id"] == merged_id,"original_id"]
+        orig_ids_list = list(orig_ids)
 
-    if num_to_sample >= 1:
-        while len(set_of_samples) < 8000:
-            for key in merged_orig:
-                set_of_samples.add(random.choice(merged_orig[key]))
+        # split up based on - so we have a list of license plates
+        license_plates = [n.split(sep = "-")[-2:] for n in orig_ids_list]
 
-    os.system("mkdir " + working_dir + "/sampled_sams")
+        # make into one string
+        license_plates_clean = ["-".join(n) for n in license_plates]
 
-    for sample in set_of_samples:
+        col_constructor_orig.append(license_plates_clean) 
 
-        os.system("mv " + working_dir + "/aligned_sams/" + sample + ".sam " + working_dir + "/sampled_sams")
+    sum_table_ann = sum_table
+    sum_table_ann["original_id_set"] = col_constructor_orig
 
-    os.system('cd ' + working_dir + "; \
-              featureCounts -a anti_joined.gtf -F 'GTF' -g " + attribute_choice + " -t " + midcol + " -o matches.tsv sampled_sams/*.sam -O -M")
+    sum_table_ann.to_csv("merged_counts.csv", index = False)
 
-matches_df = pd.read_csv(working_dir + "/matches.tsv", sep = "\t", skiprows = 1)
-
-matches_df = matches_df.drop(["Chr", "Start", "End", "Strand", "Length"], axis = 1)
-
-summary_df = pd.read_csv(working_dir + "/matches.tsv.summary", sep = "\t", nrows = 1)
-
-# Find out where the aligned reads mapped to
-
-matches_df = matches_df.set_index("Geneid")
-
-ids = list(matches_df.columns)
-
-ids_clean = [n.replace("aligned_sams/", "") for n in ids]
-
-if len(all_sams) >= 8000:
-    ids_clean = [n.replace("sampled_sams/", "") for n in ids]
-
-ids_clean2 = [n.replace(".sam", "") for n in ids_clean]
-
-annotation_df_to_join = {"id":ids_clean2}
-
-# We only imported the first row
-for row in summary_df.iterrows():
-    assigned_list = list(row[1])
-    
-assigned_list.pop(0)
-
-status = []
-anno = []
-
-i = 0
-
-geneids = list(matches_df.index)
-
-if len(all_sams) >= 8000:
-    for item in assigned_list:
-        if item == 0:
-            status.append(True)
-            
-            anno.append("")
-            
-        else:
-            status.append(True)
-            
-            id_name = ids_clean2[i]
-            
-            columnwithdata= matches_df["sampled_sams/"+ id_name + ".sam"]
-            
-            index_list = columnwithdata.to_numpy().nonzero()[0].tolist()
-            
-            storage_gene = []
-            
-            for indx in index_list:
-                geneid = geneids[indx]
-                
-                storage_gene.append(geneid)
-                
-            entry_to_add = ";".join(storage_gene)
-            
-            anno.append(entry_to_add)
-            
-        i += 1
-else:
-    for item in assigned_list:
-        if item == 0:
-            status.append(True)
-            
-            anno.append("")
-            
-        else:
-            status.append(True)
-            
-            id_name = ids_clean2[i]
-            
-            columnwithdata= matches_df["aligned_sams/"+ id_name + ".sam"]
-            
-            index_list = columnwithdata.to_numpy().nonzero()[0].tolist()
-            
-            storage_gene = []
-            
-            for indx in index_list:
-                geneid = geneids[indx]
-                
-                storage_gene.append(geneid)
-                
-            entry_to_add = ";".join(storage_gene)
-            
-            anno.append(entry_to_add)
-            
-        i += 1
-
-annotation_df_to_join.update({"annotation":anno})
-
-converted_df_an = pd.DataFrame.from_dict(annotation_df_to_join)
-
-annotated_ref_table = ref_table.join(converted_df_an.set_index("id"), on = "original_id", how = "left")
-
-annotated_ref_table.to_csv("annotated_ref_table.csv", index = False)
-
-# The final component of this script is to call sets of license plates
-# that associate with each fragment
-# this will allow for some cool stuff to be done
-# once other species are investigated
-# i think the mintmap code can be modified to include
-# some degree of similarity
-# Also, will include if it is flagged as an out of 
-# biotype mapping (just identified i guess)
-
-col_constructor_orig = []
-col_constructor_outside = []
-for row in sum_table.iterrows():
-    # each row will have a unique value
-    row_data = list(row[1])
-
-    # get the merged id
-    merged_id = row_data[0]
-
-    # get all rows that have 
-    orig_ids = annotated_ref_table.loc[annotated_ref_table["new_id"] == merged_id,"original_id"]
-    orig_ids_list = list(orig_ids)
-
-    # outside maps
-    outside_maps = annotated_ref_table.loc[annotated_ref_table["new_id"] == merged_id, "annotation"]
-    outside_maps = set(outside_maps)
-
-    if np.nan in outside_maps:
-        outside_maps.remove(np.nan)
-
-    # split up based on - so we have a list of license plates
-    license_plates = [n.split(sep = "-")[-2:] for n in orig_ids_list]
-
-    # make into one string
-    license_plates_clean = ["-".join(n) for n in license_plates]
-
-    col_constructor_orig.append(license_plates_clean)
-    col_constructor_outside.append(outside_maps)
-
-    # we will add this list to the sum table and export
-
-sum_table_ann = sum_table
-sum_table_ann["original_id_set"] = col_constructor_orig
-sum_table_ann["outside_maps"] = col_constructor_outside
-
-sum_table_ann.to_csv("merged_counts.csv", index = False)
-
-os.system("mv merged_counts.csv " + out_dir)
-
+    os.system("mv merged_counts.csv " + out_dir)
 # make diagrams showing how peaks were laid out
 
 if make_lots == True:
