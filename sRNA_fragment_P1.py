@@ -99,7 +99,7 @@ os.system('cd ' + working_dir + ';\
 ## FASTQC Module 1 ##
 if fastqc_bool == True:
     os.system('cd ' + working_dir + ';\
-    cat samples_adapters.txt | parallel "gzcat {}.fastq.gz | head -n 1000000 > subset_{}.fastq";\
+    cat samples_adapters.txt | parallel "gunzip -c {}.fastq.gz | head -n 1000000 > subset_{}.fastq";\
     cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "fastqc subset_{}.fastq";\
     mkdir ' + out_dir + "/fastqc_pretrim" + ';\
     cat samples_adapters.txt | parallel "mv subset_{}_fastqc.html ' +  out_dir + "/fastqc_pretrim" +'";\
@@ -173,7 +173,7 @@ if remove_adapters_bool == True:
 if remove_adapters_bool == True:
     if fastqc_bool == True:
         os.system('cd ' + working_dir + ';\
-        cat samples_adapters.txt | parallel "gzcat {}.fastq.gz | head -n 1000000 > subset_{}.fastq";\
+        cat samples_adapters.txt | parallel "gunzip -c {}.fastq.gz | head -n 1000000 > subset_{}.fastq";\
         cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "fastqc subset_{}.fastq";\
         mkdir ' + out_dir + "/fastqc_posttrim" + ';\
         cat samples_adapters.txt | parallel "mv subset_{}_fastqc.html ' +  out_dir + "/fastqc_posttrim" +'";\
