@@ -19,10 +19,19 @@ P2_bool = config_vars['module_options']['P2']['bool']
 
 out_dir = config_vars['dir_locations']['out_dir']
 working_dir = config_vars["dir_locations"]["working_dir"]
+sample_dir =config_vars["dir_locations"]["sample_dir"]
 
 delete_working = config_vars['module_options']["delete_working"]
 
 make_summary = config_vars["module_options"]["SUMMARY"]
+
+# Confirm that dir exists
+if os.path.isdir(out_dir) == False:
+    raise ValueError("Out dir does not exist")
+if os.path.isdir(working_dir)  == False:
+    raise ValueError("Working dir does not exist")
+if os.path.isdir(sample_dir) == False:
+    raise ValueError("Sample directory does not exist")
 
 ## -- Config Variables -- ##
 
