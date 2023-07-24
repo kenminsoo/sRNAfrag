@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 pwd > install_wd.txt
 
+mkdir test_results
+
 echo "creating test yaml file"
 
 python create_test_yaml.py
