@@ -26,6 +26,9 @@ delete_working = config_vars['module_options']["delete_working"]
 make_summary = config_vars["module_options"]["SUMMARY"]
 
 # Confirm that dir exists
+os.system("mkdir " + out_dir)
+os.system("mkdir " + working_dir)
+
 if os.path.isdir(out_dir) == False:
     raise ValueError("Out dir does not exist")
 if os.path.isdir(working_dir)  == False:
