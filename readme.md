@@ -28,12 +28,10 @@ SOFTWARE.
 Welcome to our sRNAfrag github repo. sRNAfrag is a pipeline that analyzes small RNA fragmentation in small RNA-seq data. On this page, installation and basic usage can be found. Please consult the wiki attached to this repo for more information. 
 
 ## Installation & Environment
-sRNAfrag was developed with R version 4.1.3 and Python 3.10.0. It was developed on MacOS Monterey 12.2.1 M1 64GB, and tested on the same computer. 
+sRNAfrag was developed with R version >4.1.3 and Python 3.10.0. It was developed on MacOS Monterey 12.2.1 M1 64GB, and tested on the same computer. 
 
-The singularity container was tested on a CentOS Linux 7 (3.10.0-1160.92.1.el7.x86_64) system with 6 cores and 32 GB of memory. 
-
-### **Running with Singularity Container**
-To accomodate for HPC use, we created a container. 
+### Installing Dependencies Manually
+To accomodate for HPC use, we define here a conda independent way to 
 
 ### **Installing with Conda**
 
@@ -42,9 +40,9 @@ MAC-OS x86_64
 
 UBUNTU x86_64
 
-IF you are working on an ARM infrastructure, please download the x86_64 version of Conda. Tested on MAC-OS ARM (M1) infrasturcture. 
+IF you are working on an ARM infrastructure on MACOS, please download the x86_64 version of Conda. Unfortunately, if you are working on an ARM infrastructure on Linux, then it will not work. 
 
-Will not play well on HPC clusters. 
+Generally will not play well on HPC clusters. 
 
 #### Prerequisite
 Install R, please consult their website. [R](https://cran.r-project.org/)
