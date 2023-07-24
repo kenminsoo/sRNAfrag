@@ -5,10 +5,8 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - pip=23.0
-  - grep=3.11
+  - pip
   - python=3.10
-  - yaml==0.2.5
   - parallel
   - pip:
       - brotli==1.0.9

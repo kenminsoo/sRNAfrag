@@ -14,6 +14,7 @@ echo "R packages installed."
 
 # Create conda  environment under name sRNAfrag
 eval "$(conda shell.bash hook)"
+conda config --set channel_priority disabled
 conda env create -f requirements_conda.yml
 conda activate sRNAfrag
 
