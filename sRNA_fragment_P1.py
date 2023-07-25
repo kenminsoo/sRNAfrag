@@ -287,7 +287,7 @@ os.system('cd ' + working_dir + "; \
     done')
 
 # Some syntax error exists so just make hidden shell script for this
-os.system('cp .change.sh ' + working_dir + ";\
+os.system('cp scripts/.change.sh ' + working_dir + ";\
           cd " + working_dir + ";\
           sh .change.sh;\
           echo FRAGMENT COUNTS EXTRACTED,COMPLETE >> pipeline_summary.csv")
@@ -316,7 +316,7 @@ os.system('cd ' + working_dir + '; \
           mv num_reads_bam.csv ' + out_dir)
 
 # Combine files
-os.system('cp .combine.py ' + working_dir + ";\
+os.system('cp scripts/.combine.py ' + working_dir + ";\
           cd " + working_dir + ";\
             python .combine.py;\
                 echo COUNTS COMBINED >> pipeline_summary.csv; \

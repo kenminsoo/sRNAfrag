@@ -4,7 +4,6 @@ library(ggsci)
 library(patchwork)
 library(ggseqlogo)
 library(gt)
-library(webshot2)
 
 # Import data
 counts <- read.csv("sRNA_frag_counts.csv")
@@ -216,7 +215,7 @@ counts_adjusted %>%
   mutate(prop = n / total_counts) %>%
   gt::gt() %>%
   tab_header(title = "Top 10 5' Flanking 5-mers") %>%
-  gtsave("S1_five-mer_5p.png")
+  gtsave("S1_five-mer_5p.html")
 
 total_counts_3p <- counts_adjusted %>%
   group_by(flanking3p) %>%
@@ -236,7 +235,7 @@ counts_adjusted %>%
   dplyr::select(!length) %>%
   gt::gt() %>%
   tab_header(title = "Top 10 3' Flanking 5-mers") %>%
-  gtsave("S1_five-mer_3p.png")
+  gtsave("S1_five-mer_3p.html")
 
 write.csv(counts_filtered, file = "filtered_corrected_counts.csv", row.names = F)
 write.csv(counts_filtered_plotting, file = "filtered_counts.csv", row.names = F)

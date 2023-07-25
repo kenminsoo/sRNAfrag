@@ -25,7 +25,6 @@ conda install -c bioconda -y adapterremoval=2.3.3
 conda install -c bioconda -y bedtools=2.30.0
 conda install -c bioconda -y fastqc=0.12.1
 conda install -c bioconda -y fastx_toolkit=0.0.14
-conda install -c bioconda -y cutadapt=4.4
 conda install -c bioconda -y hisat2=2.2.1
 conda install -c bioconda -y bedtools=2.30.0
 conda install -c bioconda -y subread=2.0.6

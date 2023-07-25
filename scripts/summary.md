@@ -38,16 +38,6 @@ Figure 3. Logos of most common motifs by frequency.
 
 Figure 4. Logos of most common motifs by counts.
 
-### Most common 5p 5-mers
-<img src="figures/S1_five-mer_5p.png" alt="drawing" width="400"/>
-
-Figure 5. Most common fiver-mers on 5p end of fragment.
-
-### Most common 3p 5-mers
-<img src="figures/S1_five-mer_3p.png" alt="drawing" width="400"/>
-
-Figure 6. Most common fiver-mers on 3p end of fragment.
-
 ### Directory Structure
 
 Main-Dir
@@ -65,8 +55,8 @@ Main-Dir
         |__S1_freq_motifs.jpeg // Motifs by frequency
         |__S1_motifs_counts.jpeg // Motifs by counts
         |__S1_std_loci.jpeg // Loci location information
-        |__S1_five-mer_3p.png // Most common 3p fiver-mers | Please feel free to modify the S1_figures.R
-        |__S1_five-mer_5p.png // Most common 5p fiver-mers | If you'd like to generate different length.
+        |__S1_five-mer_3p.html // Most common 3p fiver-mers | Please feel free to modify the S1_figures.R
+        |__S1_five-mer_5p.html // Most common 5p fiver-mers | If you'd like to generate different length.
 
 ## P2 Module Outputs
 

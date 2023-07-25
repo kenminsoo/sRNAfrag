@@ -34,9 +34,76 @@ sRNAfrag was developed with R version >4.1.3 and Python 3.10.0. It was developed
 
 #### **PYTHON**
 
+Users should use pip python package manager to download all packages. To do so, they can run the following command.
+
+```
+cd install
+pip install -f requirements_pip.txt
+```
+
+Behavior: Should install all packages. Ensure that you have python installed. In general, pip comes with your installation of Python. 
+
 #### **R**
 
+To accomodate for HPC systems that do not allow users to have write access to the packages that R will use, sRNAfrag creates its own directory for R packages. If the user chooses to install packages manually, they can do the following:
+
+Create a folder of sRNAfrag packages with the install directory:
+
+1. First, create a directory with the following name.
+
+```
+cd install
+mkdir sRNA_packages_R
+```
+
+2. Then, run
+```
+Rscript install.R
+```
+
+3. Add the directory to your R Path such that R searches for libraries within your custom directory.
+
+```
+cwd=$(pwd)
+export R_LIBS=$cwd/sRNA_packages_R
+```
+
+Behavior: Will install all R packages within the install directory.
+
+Install R packages to the standard user library directory:
+
+1. Run 
+```
+Rscript install_write.R
+```
+
+Behavior: Will simply install R packages normally. 
+
 #### **BIO TOOLS** (i.e. Bowtie)
+
+Please add all tools to your path.
+
+[bowtie=1.3.1](https://bowtie-bio.sourceforge.net/manual.shtml) - REQUIRED
+
+[bedtools=2.30.0](https://bedtools.readthedocs.io/en/latest/content/installation.html) - REQUIRED
+
+[fastx_toolkit=0.0.14](http://hannonlab.cshl.edu/fastx_toolkit/download.html) - REQUIRED
+
+[subread=2.0.6](https://subread.sourceforge.net/SubreadUsersGuide.pdf) - REQUIRED
+
+[samtools=1.17](http://www.htslib.org/) - REQUIRED
+
+[umi_tools=1.1.4](https://umi-tools.readthedocs.io/en/latest/INSTALL.html) - OPTIONAL (iff need to remove UMIs)
+
+[adapterremoval=2.3.3](https://adapterremoval.readthedocs.io/en/stable/installation.html) OPTIONAL (iff need to remove adapters)
+
+[fastqc=0.12.1](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) - OPTIONAL (iff need to run quality check module)
+
+[hisat2=2.2.1](http://daehwankimlab.github.io/hisat2/download/) - OPTIONAL (iff you want to use a certain command in the scripts)
+
+[bowtie2=2.5.1]() - OPTIONAL (iff you want to use a certain command in the scripts)
+
+[ViennaRNA](https://www.tbi.univie.ac.at/RNA/ViennaRNA/doc/html/install.html) - OPTIONAL (iff you want to create secondary stuctures with RNAFold)
 
 ### **Installing with Conda**
 

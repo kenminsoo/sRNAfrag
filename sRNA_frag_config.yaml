@@ -13,6 +13,8 @@ module_options:
     prefix: hg38
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
+    # for our cell line samples, UMIs and Adapters are already removed.
+    # We add adapter trimming time from 9 core run.
     umi_removal:
       bool: False
       regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
@@ -22,7 +24,7 @@ module_options:
       bool: False
       sequence: AGATCGGAAGAG
 
-    # An annotation file to generate fragments from => Should be filtered and have sequences included in attributes
+    # An annotation file to generate fragments from => Should be filtered with sequences
     annotation_options: 
       location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/scripts/H.sapiens/h.sapiens_snoRNA_final.gtf"
     
@@ -47,11 +49,12 @@ module_options:
     bool: True
 
   # P2: Second Processing Module. Dependent on P1 and S1
+  # Ensure that an index location is given in the P1 module before running P2
   P2: 
     bool: True
 
-    # The annotation file you would like to check for out-of-space mapping
-    # i.e. if miRNA, use an miRbase annotation file
+    # from ITAS publication
+    # merged with snoDB
     annotation_file: ""
     
     # Find out of space maps
@@ -66,8 +69,9 @@ module_options:
     # What to annotate for outside mappings (in featurecounts the -g option)
     look_for: transcript_id
 
-    # What you want featurecounts to look for in the second column i.e. exon or transcript
+    # What the column with exon would be
     col2_name: exon
+
 
   # SUMMARY: Summarize report in pdf format
   SUMMARY: True

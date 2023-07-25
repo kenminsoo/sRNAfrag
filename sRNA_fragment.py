@@ -42,14 +42,14 @@ if P1_bool == True:
     os.system("python sRNA_fragment_P1.py")
 
 if S1_bool == True:
-    os.system("cp .S1_figures.R " + out_dir + ";\
+    os.system("cp scripts/.S1_figures.R " + out_dir + ";\
             cd " + out_dir + ";\
             Rscript .S1_figures.R")
 
 if P2_bool == True:
     # Copy bash script for edge case where there are over 8000 fragments detected
     os.system("mkdir " + working_dir + "/aligned_sams")
-    os.system("cp .add_prefix_outspace.sh " + working_dir + "/aligned_sams")
+    os.system("cp scripts/.add_prefix_outspace.sh " + working_dir + "/aligned_sams")
 
     os.system("cp sRNA_frag_config.yaml " + out_dir + ";\
             cp sRNA_fragment_P2.py " + out_dir + ";\
@@ -74,8 +74,8 @@ if S1_bool == True:
             mv S1_std_loci.jpeg figures;\
             mv S1_motifs_counts.jpeg figures;\
             mv S1_freq_motifs.jpeg figures;\
-            mv S1_five-mer_5p.png figures;\
-            mv S1_five-mer_3p.png figures;\
+            mv S1_five-mer_5p.html figures;\
+            mv S1_five-mer_3p.html figures;\
             mv S1_correction_density.jpeg figures;\
             mv filtered_corrected_counts.csv tables;\
             mv filtered_counts.csv tables")
@@ -102,6 +102,6 @@ if delete_working == True:
     os.system("rm -rf " + working_dir)
 
 if make_summary == True:
-    os.system("cp summary.md " + out_dir + ";\
+    os.system("cp scripts/summary.md " + out_dir + ";\
             cd " + out_dir + ";\
             python -m markdown summary.md > summary.html")
