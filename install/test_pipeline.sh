@@ -1,6 +1,10 @@
 #!/usr/bin/bash
 pwd > install_wd.txt
 
+cwd=$(pwd)
+
+export R_LIBS=$cwd/sRNA_packages_R
+
 mkdir test_results
 
 echo "creating test yaml file"

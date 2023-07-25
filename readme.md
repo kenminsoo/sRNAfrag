@@ -31,7 +31,12 @@ Welcome to our sRNAfrag github repo. sRNAfrag is a pipeline that analyzes small 
 sRNAfrag was developed with R version >4.1.3 and Python 3.10.0. It was developed on MacOS Monterey 12.2.1 M1 64GB, and tested on the same computer. 
 
 ### Installing Dependencies Manually
-To accomodate for HPC use, we define here a conda independent way to 
+
+#### **PYTHON**
+
+#### **R**
+
+#### **BIO TOOLS** (i.e. Bowtie)
 
 ### **Installing with Conda**
 
@@ -40,9 +45,7 @@ MAC-OS x86_64
 
 UBUNTU x86_64
 
-IF you are working on an ARM infrastructure on MACOS, please download the x86_64 version of Conda. Unfortunately, if you are working on an ARM infrastructure on Linux, then it will not work. 
-
-Generally will not play well on HPC clusters. 
+IF you are working on an ARM infrastructure on MACOS, please download the x86_64 version of Conda. Unfortunately, if you are working on an ARM infrastructure on Linux, then it will not work. If your HPC has conda support, you should be able to install the dependencies of sRNAfrag. 
 
 #### Prerequisite
 Install R, please consult their website. [R](https://cran.r-project.org/)

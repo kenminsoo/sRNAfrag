@@ -29,6 +29,9 @@ conda install -c bioconda -y cutadapt=4.4
 conda install -c bioconda -y hisat2=2.2.1
 conda install -c bioconda -y bedtools=2.30.0
 conda install -c bioconda -y subread=2.0.6
+conda install -c bioconda -y samtools=1.17
+
+pip install -f requirements_pip.txt
 
 echo "conda installable packages, installed"
 
