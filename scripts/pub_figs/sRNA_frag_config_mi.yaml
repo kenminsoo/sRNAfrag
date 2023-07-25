@@ -1,0 +1,95 @@
+---
+# Modules to run => Boolean values
+# See documentation for more information on module functions
+# Mark true to run module
+module_options:
+  # P1: Standard Processing Module, Pre-Processing & Alignment
+  P1:
+    # Run P1
+    bool: True
+    
+    # Naming Prefix i.e. if fragment then fragment_licenseplate
+    # License plates are generated using MINTplates script based on sequence
+    prefix: MIRBASE
+
+    # Remove UMIs, Default is QIAgen UMI with regex removal option
+    # for our cell line samples, UMIs and Adapters are already removed.
+    # We add adapter trimming time from 9 core run.
+    umi_removal:
+      bool: False
+      regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
+    
+    # Remove Adapters, Default is Illumina universal
+    adapter_removal:
+      bool: True
+      sequence: AGATCGGAAGAG
+
+    # An annotation file to generate fragments from => Should be filtered with sequences
+    annotation_options: 
+      location: "/Users/kenminsoo/Desktop/unprocessed-annotations/hsa_mir_3.gtf"
+    
+    # Trim n number of bases from the 5' or 3' end during alignment
+    trim5p3p:
+      bool: False
+      p5: 4
+      p3: 4
+
+    # minimum and maximum fragment length
+    min: 15
+    max: 45
+
+    # Run quality checking modules
+    fastqc:
+      bool: True
+      # Pause pipeline after fastqc is finished
+      pause: False
+
+  # S1: Figure Set 1
+  S1:
+    bool: True
+
+  # P2: Second Processing Module. Dependent on P1 and S1
+  # Ensure that an index location is given in the P1 module before running P2
+  P2: 
+    bool: True
+
+    # from ITAS publication
+    # merged with snoDB
+    annotation_file: 
+    
+    # Find out of space maps
+    find_out_bool: False
+
+    # Indexed reference genome for out of space maps
+    built_index_location:
+
+    # Plot counts vs. fragment location on every souce transcript
+    plot_every_source: True
+
+    # What to annotate for outside mappings (in featurecounts the -g option)
+    look_for: transcript_id
+
+    # What the column with exon would be
+    col2_name: miRNA_primary_transcript
+
+
+  # SUMMARY: Summarize report in pdf format
+  SUMMARY: True
+  
+  # Delete the working directory 
+  delete_working: True
+
+system_options:
+  # Max number of cores to use
+  num_cores: 9
+  # Keep this amount of memory free in G
+  mem_free: 2
+
+# Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
+dir_locations:
+  # Set the working dir
+  working_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/working"
+  # Location of samples (ENSURE *.fastq.gz)
+  sample_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/samples"
+  # Dir to output files
+  out_dir: "/Volumes/Extreme_SSD/rerun_cell_lines/miRNA"

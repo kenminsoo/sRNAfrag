@@ -11,4 +11,10 @@ knakats@emory.edu
 
 With email title: "sRNAfrag - Annotation Request: XYZ" 
 
-Please download the reference genome from NCBI. 
+Please download the reference genome from NCBI.
+
+## Getting valid config files for other biotypes
+
+Modify the yaml file in this directory for 
+a. The annotation file (tair_biotype_final.gtf)
+b. The out dir (/out/tair_biotype)

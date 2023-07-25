@@ -34,3 +34,8 @@ snRNA annotations were obtained from RNA central.
 Filtered for transcripts and snRNAs. 
 
 RNAcentral Consortium, Sweeney BA, Petrov AI, Ribas CE, Finn RD, Bateman A, et al. RNAcentral 2021: secondary structure integration, improved sequence search and new member databases. Nucleic Acids Research. 2021 Jan 8;49(D1):D212–20. 
+
+## To Annotate all small RNAs
+Please download any small RNA annotation file. 
+
+ITAS compiles many biotypes, so I found that to be helpful. RNA central is also helpful but the IDs can be a bit of a hassle to work with. However, RNAcentral + annotating for biotype might prove to be helpful to show where fragments are originating from if you are not interested in the exact source transcript.
