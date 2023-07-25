@@ -133,22 +133,24 @@ if fastqc_bool == True:
         input()
 
 ## Remove UMI from files ##
-## Deduplication BAM files ##
 if remove_umis_bool == True:
-    os.system('cd ' + working_dir + '; \
-              cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "samtools sort {}.bam -o sorted_{}.bam;"\
-              cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "mv sorted_{}.bam {}.bam";\
-              cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "samtools index {}.bam";\
-              cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free)  + 'G --memfree ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "umi_tools dedup --method=unique --stdin={}.bam --log={}.logfile > dedup_{}.bam";\
-              cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "mv dedup_{}.bam {}.bam";\
-              echo UMI DEDUP,COMPLETE >> pipeline_summary.csv')
+    os.system('cd ' + working_dir + ';\
+    cat samples_adapters.txt | parallel -I ,,,  --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "umi_tools extract --extract-method=regex --bc-pattern=' + "'"+ umi_pattern  + "'" + ' -I ,,,.fastq.gz -S processed.,,,.fastq.gz";\
+        cd ' + working_dir + "; \
+            for f in processed* ; do \
+                new_file=${f#processed.}; \
+                mv $f $new_file;\
+                done; \
+        echo UMI REMOVAL,COMPLETE >> pipeline_summary.csv")
 
-    # Ensure that bam files exist
-    # There is a case where this module will fail, not producing all files
-    files = glob.glob(working_dir + "/*.bam")
+    progress_track = pd.read_csv(working_dir + "/pipeline_summary.csv")
 
-    if len(files) != n:
-        raise ValueError("UMI Dedup failed.")
+    status = list(progress_track.loc[progress_track['JOB'] == "UMI REMOVAL"]["STATUS"])[0]
+
+    if status == "COMPLETE":
+        print("OK")
+    else:
+        raise ValueError("UMI extraction failed.")
 
 if remove_adapters_bool == True:
     os.system('cd ' + working_dir + '; \
