@@ -257,9 +257,8 @@ else:
 ## Deduplication BAM files ##
 if remove_umis_bool == True:
     os.system('cd ' + working_dir + '; \
-              cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "samtools sort -n {}.bam -o sorted_{}.bam";\
+              cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "samtools sort --write-index -o sorted_{}.bam {}";\
               cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "mv sorted_{}.bam {}.bam";\
-              cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "samtools index {}.bam";\
               cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free)  + 'G --memfree ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "umi_tools dedup --method=unique --stdin={}.bam --log={}.logfile > dedup_{}.bam";\
               cat samples_adapters.txt | parallel --memsuspend ' + str(mem_free) + 'G -j ' + str(max_cores) + ' --progress "mv dedup_{}.bam {}.bam";\
               echo UMI DEDUP,COMPLETE >> pipeline_summary.csv')
