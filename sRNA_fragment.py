@@ -42,12 +42,6 @@ if P1_bool == True:
     os.system("python sRNA_fragment_P1.py")
 
 if S1_bool == True:
-    if os.path.isdir("install/sRNA_packages_R"):
-        os.system("cd install;\
-                  cwd=$(pwd);\
-                  export R_LIBS=$cwd/sRNA_packages_R")
-
-if S1_bool == True:
     os.system("cp scripts/.S1_figures.R " + out_dir + ";\
             cd " + out_dir + ";\
             Rscript .S1_figures.R")
