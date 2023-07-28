@@ -573,6 +573,8 @@ def decode_sequence(plate):
 
     return final_result
 
+# Normalize with RPKM
+
 # Obtain RNA-fold plots of all potential sources
 # Given the original gtf file, merged_counts, and merged id. 
 def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
