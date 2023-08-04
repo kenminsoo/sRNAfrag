@@ -38,7 +38,17 @@ if os.path.isdir(sample_dir) == False:
 
 ## -- Config Variables -- ##
 
+if P2_bool == True:
+    os.system("cp sRNA_frag_config.yaml " + out_dir + ";\
+            cp sRNA_fragment_P2.py " + out_dir + ";\
+            cp gtf_groundtruth.py " + out_dir + ";\
+            cp gtf_modifiers.py " + out_dir + ";\
+            cp conversion_tools.py " + out_dir + ";\
+            cp alias_work.py " + out_dir + ";\
+            cp basics.py " + out_dir)
+
 if P1_bool == True:
+    print("User can start running next instance of sRNAfrag.")
     os.system("python sRNA_fragment_P1.py")
 
 if S1_bool == True:
@@ -51,14 +61,7 @@ if P2_bool == True:
     os.system("mkdir " + working_dir + "/aligned_sams")
     os.system("cp scripts/.add_prefix_outspace.sh " + working_dir + "/aligned_sams")
 
-    os.system("cp sRNA_frag_config.yaml " + out_dir + ";\
-            cp sRNA_fragment_P2.py " + out_dir + ";\
-            cp gtf_groundtruth.py " + out_dir + ";\
-            cp gtf_modifiers.py " + out_dir + ";\
-            cp conversion_tools.py " + out_dir + ";\
-            cp alias_work.py " + out_dir + ";\
-            cp basics.py " + out_dir + ";\
-                cd " + out_dir + ";\
+    os.system("cd " + out_dir + ";\
                     python sRNA_fragment_P2.py")
 
 # Clean up Module

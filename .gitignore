@@ -1,7 +1,6 @@
 testing_env/
 RNA_central/
 SPRMT_merge_031323_seq.gtf
-*.fa
 *.fai
 *.tsv 
 .Rproj.user

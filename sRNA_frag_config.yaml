@@ -16,12 +16,12 @@ module_options:
     # for our cell line samples, UMIs and Adapters are already removed.
     # We add adapter trimming time from 9 core run.
     umi_removal:
-      bool: False
+      bool: True
       regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
     
     # Remove Adapters, Default is Illumina universal
     adapter_removal:
-      bool: False
+      bool: True
       sequence: AGATCGGAAGAG
 
     # An annotation file to generate fragments from => Should be filtered with sequences
@@ -55,13 +55,13 @@ module_options:
 
     # from ITAS publication
     # merged with snoDB
-    annotation_file: ""
+    annotation_file: "/Users/kenminsoo/Desktop/unprocessed-annotations/testing_env/SPRMT_merge_031323_seq.gtf"
     
     # Find out of space maps
-    find_out_bool: False
+    find_out_bool: True
 
     # Indexed reference genome for out of space maps
-    built_index_location: ""
+    built_index_location: "/Users/kenminsoo/Desktop/unprocessed-annotations/hg38"
 
     # Plot counts vs. fragment location on every souce transcript
     plot_every_source: True
@@ -77,19 +77,19 @@ module_options:
   SUMMARY: True
   
   # Delete the working directory 
-  delete_working: True
+  delete_working: False
 
 system_options:
   # Max number of cores to use
-  num_cores: 9
+  num_cores: 5
   # Keep this amount of memory free in G
   mem_free: 2
 
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/install/test_results/working"
+  working_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/working"
   # Location of samples (ENSURE *.fastq.gz)
-  sample_dir: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/install/test_data"
+  sample_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW"
   # Dir to output files
-  out_dir: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/install/test_results/out"
+  out_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/out_sno"

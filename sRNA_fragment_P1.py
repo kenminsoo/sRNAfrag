@@ -227,6 +227,12 @@ if remove_adapters_bool == True:
         print("Use ctrl-C to cancel pipeline.")
         input()
 
+# Remove the subset files
+if remove_adapters_bool == True:
+    if fastqc_bool == True:
+        os.system("cd " + out_dir + ";\
+                  rm -rf subset_*")
+
 gtf_attribute_to_fasta(annotation_file, working_dir + "/transcriptome.fa", "sequence", "transcript_id", pipeline = True)
 
 generate_index_bowtie(working_dir + "/transcriptome.fa", working_dir + "/transcriptome")

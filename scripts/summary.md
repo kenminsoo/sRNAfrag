@@ -11,7 +11,7 @@ Main-Dir
 |__out
 
     |__tables
-        |__num_reads_bam.csv // Number of reads for each library. Can be used for CPM/TPM/RPKM normalization.
+        |__num_reads_bam.csv // Number of reads assigned to biotype of choice.
         |__sRNA_frag_counts.csv // Counts for all fragments. Raw data. 
 
 ## S1 Module Outputs
@@ -45,7 +45,7 @@ Main-Dir
 |__out
 
     |__tables
-    |   |__num_reads_bam.csv // Number of reads for each library, Can be used for CPM/TPM/RPKM normalization
+    |   |__num_reads_bam.csv //  Number of reads assigned to biotype of choice.
     |   |__sRNA_frag_counts.csv // Counts for all fragments, Raw data
     |   |__filtered_corrected_counts.csv // Adjusted counts
     |   |__filtered_counts.csv // Unadjusted counts
@@ -77,7 +77,7 @@ Main-Dir
 |__out
 
     |__tables
-    |   |__num_reads_bam.csv // Number of reads for each library, Can be used for CPM/TPM/RPKM normalization
+    |   |__num_reads_bam.csv // Number of reads assigned to biotype of choice.
     |   |__sRNA_frag_counts.csv // Counts for all fragments, Raw data
     |   |__filtered_corrected_counts.csv // Adjusted counts
     |   |__filtered_counts.csv // Unadjusted counts
