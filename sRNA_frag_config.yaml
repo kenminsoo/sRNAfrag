@@ -24,7 +24,7 @@ module_options:
 
     # An annotation file to generate fragments from => Should be filtered and have sequences
     annotation_options: 
-      location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/scripts/H.sapiens/tRNA_CCA_2.gtf"
+      location: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/seq_yrna_4.gtf"
     
     # Trim n number of bases from the 5' or 3' end during alignment
     trim5p3p:
@@ -38,7 +38,7 @@ module_options:
 
     # Run quality checking modules
     fastqc:
-      bool: True
+      bool: False
       # Pause pipeline after fastqc is finished
       pause: False
 
@@ -89,4 +89,4 @@ dir_locations:
   # Location of samples (ENSURE *.fastq.gz)
   sample_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/fastq"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/out_tRNA"
+  out_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/out_yRNA"

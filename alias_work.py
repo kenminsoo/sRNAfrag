@@ -195,9 +195,9 @@ def fasta_chr_extract(fasta):
 
                 chr_name = sep_line[0]
 
-                chrs.append(chr_name)
+                chrs.append(chr_name.strip(">").strip("\n"))
 
-    return chrs
+    print(chrs)
 
 if __name__ == '__main__':
   fire.Fire()

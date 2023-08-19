@@ -576,6 +576,82 @@ def decode_sequence(plate):
 
     return final_result
 
+# Compare license plates
+# Counts should be two columns, a key and an ID, skip first row to get straight to data
+def count_table(counts, filtered_corrected_counts, skip = 1):
+   counts_dataset = defaultdict(int)
+   merged_counts_data = defaultdict(int)
+   false_negative = 0
+   false_positive = 0
+
+   with open(counts, "r") as count:
+      i = 0
+      for line in count:
+         if i <= skip:
+            i+=1
+            continue
+
+
+         sep = line.split(sep = ",")
+         id = sep[0].strip('"')
+         num = int(sep[1].strip("\n"))
+
+         lp = "-".join(id.split(sep = "-")[-2:])
+
+         counts_dataset[lp] = num
+         #print(lp)
+
+   with open(filtered_corrected_counts, "r") as filt:
+      i =0
+      for line in filt:
+         if i <= skip:
+            i += 1
+            continue
+      
+         sep = line.split(sep = ",")
+
+         id = sep[-3]   
+         num = int(sep[-1].strip("\n"))
+
+         lp = "-".join(id.split(sep = "-")[-2:])
+         lp = lp.strip('"')
+
+         merged_counts_data[lp] = num
+   queried_keys = []
+
+   truth_builder = []
+   experimental_builder = []
+   for key in merged_counts_data:
+      experimental_builder.append(merged_counts_data[key])
+      if key in counts_dataset:
+         truth_builder.append(counts_dataset[key])
+      else:
+         truth_builder.append(0)
+         false_positive += 0
+
+      queried_keys.append(key)
+   
+   toofew=0
+   for key in counts_dataset:
+      if key in queried_keys:
+         continue
+
+      truth_builder.append(counts_dataset[key])
+      experimental_builder.append(0)
+      false_negative += 1
+      if counts_dataset[key] < 5:
+         toofew += 1
+   
+   print(toofew)
+   print(false_negative)
+   print(false_positive)
+
+   plt.scatter(truth_builder, experimental_builder)
+   plt.xlabel("Counts Dataset")
+   plt.ylabel("sRNAfrag")
+   plt.show()
+
+
 # Generate summary plots for isoforms
 # Ensure that the 5p and 3p conservation aren't simply because
 # it is cut at the end
@@ -1290,7 +1366,7 @@ def cpm_norm(merged_counts, num_reads, outname):
    rd_merged_counts.to_csv(outname)
 
 # generate miRNA controls
-def generate_merged_fragments_ratio_norm(mir_counts, merged_counts, outname):
+def generate_merged_fragments_ratio_norm(mir_counts, merged_counts, outname, remove_part = False, query = ""):
     skip_list = []
     i = 0
     
@@ -1332,7 +1408,10 @@ def generate_merged_fragments_ratio_norm(mir_counts, merged_counts, outname):
 
         sample_name = sample_name.split(sep = ".")
 
-        sample_name = ".".join(sample_name[0:-2])
+        sample_name = sample_name[0]
+
+        if remove_part == True:
+           sample_name = sample_name.replace(query, "")
 
         if sample_name not in merged_counts_table:
             sample_name = sample_name.replace("-", ".")
