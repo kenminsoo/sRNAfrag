@@ -13,20 +13,18 @@ module_options:
     prefix: hg38
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
-    # for our cell line samples, UMIs and Adapters are already removed.
-    # We add adapter trimming time from 9 core run.
     umi_removal:
-      bool: True
+      bool: False
       regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
     
     # Remove Adapters, Default is Illumina universal
     adapter_removal:
-      bool: True
+      bool: False
       sequence: AGATCGGAAGAG
 
-    # An annotation file to generate fragments from => Should be filtered with sequences
+    # An annotation file to generate fragments from => Should be filtered and have sequences
     annotation_options: 
-      location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/scripts/H.sapiens/h.sapiens_snoRNA_final.gtf"
+      location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/projects/tools/scripts/H.sapiens/tRNA_CCA_2.gtf"
     
     # Trim n number of bases from the 5' or 3' end during alignment
     trim5p3p:
@@ -44,18 +42,17 @@ module_options:
       # Pause pipeline after fastqc is finished
       pause: False
 
+
   # S1: Figure Set 1
   S1:
     bool: True
 
   # P2: Second Processing Module. Dependent on P1 and S1
-  # Ensure that an index location is given in the P1 module before running P2
   P2: 
     bool: True
 
-    # from ITAS publication
-    # merged with snoDB
-    annotation_file: "/Users/kenminsoo/Desktop/unprocessed-annotations/testing_env/SPRMT_merge_031323_seq.gtf"
+    # Annotation file for outside maps
+    annotation_file: "/Users/kenminsoo/Desktop/unprocessed-annotations/testing_env/SPRMT_031323.gtf"
     
     # Find out of space maps
     find_out_bool: True
@@ -67,7 +64,7 @@ module_options:
     plot_every_source: True
 
     # What to annotate for outside mappings (in featurecounts the -g option)
-    look_for: transcript_id
+    look_for: biotype
 
     # What the column with exon would be
     col2_name: exon
@@ -77,19 +74,19 @@ module_options:
   SUMMARY: True
   
   # Delete the working directory 
-  delete_working: False
+  delete_working: True
 
 system_options:
   # Max number of cores to use
-  num_cores: 5
+  num_cores: 6
   # Keep this amount of memory free in G
   mem_free: 2
 
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/working"
+  working_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/working4"
   # Location of samples (ENSURE *.fastq.gz)
-  sample_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW"
+  sample_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/fastq"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/out_sno"
+  out_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/out_tRNA"

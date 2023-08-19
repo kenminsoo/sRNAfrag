@@ -36,7 +36,7 @@ counts_clean <- counts_clean %>%
 # >20 reads
 counts_filtered_plotting <- counts_clean %>%
   mutate(sums=rowSums(.[2:(sample_index - 1)])) %>%
-  filter(sums > 20)
+  filter(sums > 5)
 
 # Divide by number of loci
 counts_adjusted <- counts_clean
@@ -44,7 +44,7 @@ counts_adjusted[2:(sample_index-1)] <- counts_clean[2:(sample_index-1)] / counts
 
 counts_filtered <- counts_adjusted %>%
   mutate(sums=rowSums(.[2:(sample_index - 1)])) %>%
-  filter(sums > 20)
+  filter(sums > 5)
 
 # LOCI BIAS #
 # Try to plot with a scatter

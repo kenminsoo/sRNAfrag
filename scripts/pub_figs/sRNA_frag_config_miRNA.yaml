@@ -25,7 +25,7 @@ module_options:
       reference_location: 
 
     # Prebuilt index location (required if Build_index is false)
-    built_index_location: "/Users/kenminsoo/Desktop/Projects/JABSOM/Nakatsu/snoRNA_Breast/smallRNA_structure/output/adaptertrim/hg38"
+    built_index_location: 
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
     umi_removal:

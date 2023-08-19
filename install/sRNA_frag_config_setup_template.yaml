@@ -13,8 +13,6 @@ module_options:
     prefix: hg38
 
     # Remove UMIs, Default is QIAgen UMI with regex removal option
-    # for our cell line samples, UMIs and Adapters are already removed.
-    # We add adapter trimming time from 9 core run.
     umi_removal:
       bool: False
       regex: ".+(?P<discard_1>AACTGTAGGCACCATCAAT){s<=2}(?P<umi_1>.{12}).+"
@@ -24,7 +22,7 @@ module_options:
       bool: False
       sequence: AGATCGGAAGAG
 
-    # An annotation file to generate fragments from => Should be filtered with sequences
+    # An annotation file to generate fragments from => Should be filtered and have sequences
     annotation_options: 
       location: "/Volumes/Extreme_SSD/h_sapiens/h.sapiens_snoRNA_final.gtf"
     
@@ -49,12 +47,10 @@ module_options:
     bool: True
 
   # P2: Second Processing Module. Dependent on P1 and S1
-  # Ensure that an index location is given in the P1 module before running P2
   P2: 
     bool: True
 
-    # from ITAS publication
-    # merged with snoDB
+    # Annotation file for outside maps
     annotation_file: ""
     
     # Find out of space maps

@@ -278,11 +278,6 @@ if remove_umis_bool == True:
         raise ValueError("UMI Dedup failed.")
 
 ## Fragmentation Specific Module ##
-
-# Create Lookup Table
-create_lookup(annotation_file, "sequence", "transcript_id", min_length, max_length, working_dir + "/sRNA_frag_lookup.csv", id_prefix)
-os.system('cd ' + working_dir + '; \
-          echo LOOKUP TABLE,COMPLETE >> pipeline_summary.csv')
 # Index
 
 # Query for Range
@@ -303,6 +298,11 @@ os.system('cp scripts/.change.sh ' + working_dir + ";\
 progress_track = pd.read_csv(working_dir + "/pipeline_summary.csv")
 
 status = list(progress_track.loc[progress_track['JOB'] == "FRAGMENT COUNTS EXTRACTED"]["STATUS"])[0]
+
+# Create Lookup Table
+create_lookup_selective(annotation_file, "sequence", "transcript_id", min_length, max_length, working_dir + "/sRNA_frag_lookup.csv", working_dir + "/temp_builder_2.tsv", id_prefix)
+os.system('cd ' + working_dir + '; \
+          echo LOOKUP TABLE,COMPLETE >> pipeline_summary.csv')
 
 if status == "COMPLETE":
     print("OK")

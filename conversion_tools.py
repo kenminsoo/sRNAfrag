@@ -350,7 +350,7 @@ def gtf_attribute_to_fasta(gtf, output, attribute, primary_key, pipeline = False
                     names[extracted_sequence].add(primary)
                     # generate a deduplicated gtf
                 else:
-                    new.write(">" + primary + "\n" + extracted_sequence + "\n")
+                    new.write(">" + primary.replace('"', "") + "\n" + extracted_sequence.replace('"', "") + "\n")
                     new_gtf.write(line)
 
                     names[extracted_sequence].add(primary)
@@ -370,6 +370,7 @@ def gtf_attribute_to_fasta(gtf, output, attribute, primary_key, pipeline = False
 
                 seq_index = attributes.index(attribute)
                 extracted_sequence = attributes[seq_index + 1]
+                extracted_sequence = extracted_sequence.upper()
 
                 primary_index = attributes.index(primary_key)
                 primary = attributes[primary_index + 1]
@@ -378,7 +379,7 @@ def gtf_attribute_to_fasta(gtf, output, attribute, primary_key, pipeline = False
                     names[extracted_sequence].add(primary)
                     # generate a deduplicated gtf
                 else:
-                    new.write(">" + primary + "\n" + extracted_sequence + "\n")
+                    new.write(">" + primary.strip('"') + "\n" + extracted_sequence.strip('"') + "\n")
 
                     names[extracted_sequence].add(primary)
 

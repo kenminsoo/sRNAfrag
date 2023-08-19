@@ -8,6 +8,9 @@ import sys
 import re
 import argparse
 import os
+from pymsaviz import MsaViz, get_msa_testdata
+from statsmodels.stats.multitest import fdrcorrection
+from scipy.stats import ranksums
 
 def separate_gtf_line(line):
     split_line = line.split(sep = "\t")
@@ -573,7 +576,1281 @@ def decode_sequence(plate):
 
     return final_result
 
-# Normalize with RPKM
+# Generate summary plots for isoforms
+# Ensure that the 5p and 3p conservation aren't simply because
+# it is cut at the end
+def create_msa_summary_not_end(gtf, filtered_counts, ref_table, outdir):
+   sequences = defaultdict(str)
+   with open(gtf, "r") as gtf_file:
+      for line in gtf_file:
+         splitted_line = separate_gtf_line(line)
+         attributes = splitted_line[1]
+
+         transcript_name = attributes[attributes.index("transcript_id") + 1].replace('"', "")
+         sequence = attributes[attributes.index("sequence") + 1].replace('"', "")
+
+         sequences[transcript_name] = sequence.upper()
+
+   rd_filtered_counts = pd.read_csv(filtered_counts)
+   rd_ref_table = pd.read_csv(ref_table)
+
+   column_builder = []
+
+   merged_col_build = []
+
+   for merged_id in np.unique(rd_ref_table["new_id"]):
+      num_fragments = len(rd_ref_table.loc[rd_ref_table["new_id"] == merged_id,:])
+
+      frag_set_of_sources = defaultdict(set)
+      frag_counts = defaultdict(int)
+      frag_starts = defaultdict(str)
+      frag_ends = defaultdict(str)
+      the_all_set = set()
+      list_of_frags = []
+      lengths_frags = []
+      frag_counts_list = []
+
+      for i in rd_ref_table.loc[rd_ref_table["new_id"] == merged_id,:]["original_id"]:
+
+         for j in str(rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sources"].values[0]).split(sep = ">"):
+            frag_set_of_sources[i].add(j.split(sep = "__")[1])
+            the_all_set.add(j.split(sep = "__")[1])
+            frag_starts[i + "_" + j.split(sep = "__")[1]] = j.split(sep = "__")[0].split(sep = ";")[0]
+            frag_ends[i + "_" + j.split(sep = "__")[1]] = j.split(sep = "__")[0].split(sep = ";")[1]
+         
+         frag_counts[i] = rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sums"].values[0]
+         frag_counts_list.append(rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sums"].values[0])
+         list_of_frags.append(i)
+         lengths_frags.append(len(frag_set_of_sources[i]))
+
+      if max(lengths_frags) == 1:
+         column_builder.append("ONLY ONE SOURCE")
+         merged_col_build.append(merged_id)
+         continue
+
+      the_all_length = len(the_all_set)
+
+      fragments_to_plot = [list_of_frags[i] for i in range(0, len(list_of_frags)) if lengths_frags[i] == max(lengths_frags)]
+      max_fragments = [list_of_frags[i] for i in range(0, len(list_of_frags)) if frag_counts_list[i] == max(frag_counts_list)]
+      if len(max_fragments) > 1:
+         max_fragments = [max_fragments[0]]
+
+      all_maxes = []
+      for temp in frag_set_of_sources[max_fragments[0]]:
+         all_maxes.append(temp)
+
+      the_max_source = all_maxes[0]
+
+      the_max_start = int(frag_starts[max_fragments[0] + "_" + the_max_source]) - 1
+      the_max_end = int(frag_ends[max_fragments[0] + "_" + the_max_source]) - 1
+
+      max_at_3p_end = ""
+
+      if the_max_end - len(sequences[the_max_source]) == 0:
+         max_at_3p_end = "_max3p"
+      
+      max_at_5p_end = ""
+      if the_max_start == 0:
+         max_at_5p_end = "_min5p"
+
+      partial_sources_counts = defaultdict(int)
+
+      for key in frag_counts:
+         num_temp = len(frag_set_of_sources[key])
+         count_temp = frag_counts[key] / num_temp
+
+         for source in frag_set_of_sources[key]:
+            partial_sources_counts[source] += count_temp
+
+      total_counts = [partial_sources_counts[i] for i in partial_sources_counts]
+      total_counts = sum(total_counts)
+
+      num_to_subtract = ""
+
+      for frag in fragments_to_plot:
+         skipper = 0
+         global_sub = 0
+         global_add = 0
+         changer = False
+
+         for source in frag_set_of_sources[frag]:
+            skip_run = False
+            skip_this_time = False
+            if skipper == 0:
+               if the_max_source in frag_set_of_sources[frag]:
+                  if source == the_max_source:
+                     do_not_run = True
+                  else:
+                     do_not_run = False
+                  skipped_source = source
+                  source = the_max_source
+                  skipper += 1
+                  skip_run = True
+               else:
+                  skip_this_time = True
+                  continue
+            elif do_not_run == True:
+               do_not_run == True
+            elif skipped_source != source:
+               int_source = source
+               source = skipped_source
+               skipped_source = int_source
+
+
+
+            temp_sequence = sequences[source]
+            temp_start = int(frag_starts[frag + "_" + source]) - 1
+            temp_end = int(frag_ends[frag + "_" + source]) - 1
+
+            num_to_subtract = 5 + global_sub
+
+            while temp_start - num_to_subtract < 0:
+               num_to_subtract += -1
+
+               if num_to_subtract == 0:
+                  break
+
+            if skip_run == True:
+               plot_max_start = ""
+               while temp_start - num_to_subtract > the_max_start:
+                  num_to_subtract += 1
+                  plot_max_start = 0
+                  global_sub += 1
+
+               if plot_max_start != 0:
+                  plot_max_start = the_max_start - (temp_start - num_to_subtract) 
+            
+            num_to_add = 5 + global_add
+
+            while temp_end - num_to_add > len(temp_sequence):
+               num_to_add += -1
+
+               if num_to_add == 0:
+                  break
+
+            if skip_run == True:
+               plot_max_end = ""
+               while temp_end + num_to_add < the_max_end:
+                  num_to_add += 1
+                  global_add += 1
+                  changer = True
+
+               if plot_max_end != temp_end + num_to_add:
+                  plot_max_end = the_max_end - temp_start + num_to_subtract
+
+            new_temp_start = temp_start - num_to_subtract
+            new_temp_end = temp_end + num_to_add
+
+            if changer == True:
+               plot_max_end = new_temp_end - new_temp_start
+
+      if skip_this_time == True:
+         merged_col_build.append(merged_id)
+         column_builder.append("MAX NOT IN")
+         continue
+
+      most_cons_start = num_to_subtract
+      most_cons_end = temp_end - temp_start + num_to_subtract
+
+      entry_builder = ""
+
+      if abs(most_cons_start - plot_max_start) == 0:
+         entry_builder = entry_builder + "5p" + max_at_5p_end
+      #print(abs(plot_max_end))
+      if abs(most_cons_end - plot_max_end) == 0:
+         entry_builder = entry_builder + "3p" + max_at_3p_end
+      if entry_builder == "":
+         entry_builder = ">0 n.t."
+      column_builder.append(entry_builder)
+
+      merged_col_build.append(merged_id)
+
+
+   summary_type = pd.DataFrame(zip(merged_col_build, column_builder), columns = ["merged", "type"])
+
+   pie_builder = defaultdict(int)
+
+   for i in summary_type.loc[summary_type["type"] != "ONLY ONE SOURCE", :]["type"]:
+      pie_builder[i] += 1
+   
+   labels = []
+   sizes = []
+   n = 0
+   for key in pie_builder:
+      labels.append(key)
+      sizes.append(pie_builder[key])
+      n += pie_builder[key]
+
+   n_y = len(np.unique(rd_ref_table["new_id"]))
+
+   fig, ax = plt.subplots()
+   ax.pie(sizes, labels=labels, autopct='%1.1f%%')
+   plt.title(str(n) + "/" + str(n_y))
+   plt.savefig(outdir + "/piechat.jpeg", dpi = 500)
+
+   summary_type.to_csv(outdir + "/3p5p_labeled.csv", index=False)
+
+# Generate summary plots for isoforms
+def create_msa_summary(gtf, filtered_counts, ref_table, outdir):
+   sequences = defaultdict(str)
+   with open(gtf, "r") as gtf_file:
+      for line in gtf_file:
+         splitted_line = separate_gtf_line(line)
+         attributes = splitted_line[1]
+
+         transcript_name = attributes[attributes.index("transcript_id") + 1].replace('"', "")
+         sequence = attributes[attributes.index("sequence") + 1].replace('"', "")
+
+         sequences[transcript_name] = sequence.upper()
+
+   rd_filtered_counts = pd.read_csv(filtered_counts)
+   rd_ref_table = pd.read_csv(ref_table)
+
+   column_builder = []
+
+   merged_col_build = []
+
+   for merged_id in np.unique(rd_ref_table["new_id"]):
+      num_fragments = len(rd_ref_table.loc[rd_ref_table["new_id"] == merged_id,:])
+
+      frag_set_of_sources = defaultdict(set)
+      frag_counts = defaultdict(int)
+      frag_starts = defaultdict(str)
+      frag_ends = defaultdict(str)
+      the_all_set = set()
+      list_of_frags = []
+      lengths_frags = []
+      frag_counts_list = []
+
+      for i in rd_ref_table.loc[rd_ref_table["new_id"] == merged_id,:]["original_id"]:
+
+         for j in str(rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sources"].values[0]).split(sep = ">"):
+            frag_set_of_sources[i].add(j.split(sep = "__")[1])
+            the_all_set.add(j.split(sep = "__")[1])
+            frag_starts[i + "_" + j.split(sep = "__")[1]] = j.split(sep = "__")[0].split(sep = ";")[0]
+            frag_ends[i + "_" + j.split(sep = "__")[1]] = j.split(sep = "__")[0].split(sep = ";")[1]
+         
+         frag_counts[i] = rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sums"].values[0]
+         frag_counts_list.append(rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sums"].values[0])
+         list_of_frags.append(i)
+         lengths_frags.append(len(frag_set_of_sources[i]))
+
+      if max(lengths_frags) == 1:
+         column_builder.append("ONLY ONE SOURCE")
+         merged_col_build.append(merged_id)
+         continue
+
+      the_all_length = len(the_all_set)
+
+      fragments_to_plot = [list_of_frags[i] for i in range(0, len(list_of_frags)) if lengths_frags[i] == max(lengths_frags)]
+      max_fragments = [list_of_frags[i] for i in range(0, len(list_of_frags)) if frag_counts_list[i] == max(frag_counts_list)]
+      if len(max_fragments) > 1:
+         max_fragments = [max_fragments[0]]
+
+      all_maxes = []
+      for temp in frag_set_of_sources[max_fragments[0]]:
+         all_maxes.append(temp)
+
+      the_max_source = all_maxes[0]
+
+      the_max_start = int(frag_starts[max_fragments[0] + "_" + the_max_source]) - 1
+      the_max_end = int(frag_ends[max_fragments[0] + "_" + the_max_source]) - 1
+
+      partial_sources_counts = defaultdict(int)
+
+      for key in frag_counts:
+         num_temp = len(frag_set_of_sources[key])
+         count_temp = frag_counts[key] / num_temp
+
+         for source in frag_set_of_sources[key]:
+            partial_sources_counts[source] += count_temp
+
+      total_counts = [partial_sources_counts[i] for i in partial_sources_counts]
+      total_counts = sum(total_counts)
+
+      num_to_subtract = ""
+
+      for frag in fragments_to_plot:
+         skipper = 0
+         global_sub = 0
+         global_add = 0
+         changer = False
+
+         for source in frag_set_of_sources[frag]:
+            skip_run = False
+            skip_this_time = False
+            if skipper == 0:
+               if the_max_source in frag_set_of_sources[frag]:
+                  if source == the_max_source:
+                     do_not_run = True
+                  else:
+                     do_not_run = False
+                  skipped_source = source
+                  source = the_max_source
+                  skipper += 1
+                  skip_run = True
+               else:
+                  skip_this_time = True
+                  continue
+            elif do_not_run == True:
+               do_not_run == True
+            elif skipped_source != source:
+               int_source = source
+               source = skipped_source
+               skipped_source = int_source
+
+
+
+            temp_sequence = sequences[source]
+            temp_start = int(frag_starts[frag + "_" + source]) - 1
+            temp_end = int(frag_ends[frag + "_" + source]) - 1
+
+            num_to_subtract = 5 + global_sub
+
+            while temp_start - num_to_subtract < 0:
+               num_to_subtract += -1
+
+               if num_to_subtract == 0:
+                  break
+
+            if skip_run == True:
+               plot_max_start = ""
+               while temp_start - num_to_subtract > the_max_start:
+                  num_to_subtract += 1
+                  plot_max_start = 0
+                  global_sub += 1
+
+               if plot_max_start != 0:
+                  plot_max_start = the_max_start - (temp_start - num_to_subtract) 
+
+            num_to_add = 5 + global_add
+
+            while temp_end - num_to_add > len(temp_sequence):
+               num_to_add += -1
+
+               if num_to_add == 0:
+                  break
+
+            if skip_run == True:
+               plot_max_end = ""
+               while temp_end + num_to_add < the_max_end:
+                  num_to_add += 1
+                  global_add += 1
+                  changer = True
+
+               if plot_max_end != temp_end + num_to_add:
+                  plot_max_end = the_max_end - temp_start + num_to_subtract
+
+            new_temp_start = temp_start - num_to_subtract
+            new_temp_end = temp_end + num_to_add
+
+            if changer == True:
+               plot_max_end = new_temp_end - new_temp_start
+
+      if skip_this_time == True:
+         merged_col_build.append(merged_id)
+         column_builder.append("MAX NOT IN")
+         continue
+
+      most_cons_start = num_to_subtract
+      most_cons_end = temp_end - temp_start + num_to_subtract
+
+      entry_builder = ""
+
+      if abs(most_cons_start - plot_max_start) == 0:
+         entry_builder = entry_builder + "5p"
+      #print(abs(plot_max_end))
+      if abs(most_cons_end - plot_max_end) == 0:
+         entry_builder = entry_builder + "3p"
+      if entry_builder == "":
+         entry_builder = ">0 n.t."
+      column_builder.append(entry_builder)
+
+      merged_col_build.append(merged_id)
+
+
+   summary_type = pd.DataFrame(zip(merged_col_build, column_builder), columns = ["merged", "type"])
+
+   pie_builder = defaultdict(int)
+
+   for i in summary_type.loc[summary_type["type"] != "ONLY ONE SOURCE", :]["type"]:
+      pie_builder[i] += 1
+   
+   labels = []
+   sizes = []
+   n = 0
+   for key in pie_builder:
+      labels.append(key)
+      sizes.append(pie_builder[key])
+      n += pie_builder[key]
+
+   n_y = len(np.unique(rd_ref_table["new_id"]))
+
+   fig, ax = plt.subplots()
+   ax.pie(sizes, labels=labels, autopct='%1.1f%%')
+   plt.title(str(n) + "/" + str(n_y))
+   plt.savefig(outdir + "/piechat.jpeg", dpi = 500)
+
+   summary_type.to_csv(outdir + "/3p5p_labeled.csv", index=False)
+
+# Create MSA
+def create_msa_plot(gtf, filtered_counts, ref_table, merged_id, outdir):
+   sequences = defaultdict(str)
+   with open(gtf, "r") as gtf_file:
+      for line in gtf_file:
+         splitted_line = separate_gtf_line(line)
+         attributes = splitted_line[1]
+
+         transcript_name = attributes[attributes.index("transcript_id") + 1].replace('"', "")
+         sequence = attributes[attributes.index("sequence") + 1].replace('"', "")
+
+         sequences[transcript_name] = sequence.upper()
+
+   rd_filtered_counts = pd.read_csv(filtered_counts)
+   rd_ref_table = pd.read_csv(ref_table)
+
+   num_fragments = len(rd_ref_table.loc[rd_ref_table["new_id"] == merged_id,:])
+
+   frag_set_of_sources = defaultdict(set)
+   frag_counts = defaultdict(int)
+   frag_starts = defaultdict(str)
+   frag_ends = defaultdict(str)
+   the_all_set = set()
+   list_of_frags = []
+   lengths_frags = []
+   frag_counts_list = []
+
+   for i in rd_ref_table.loc[rd_ref_table["new_id"] == merged_id,:]["original_id"]:
+
+      for j in str(rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sources"].values[0]).split(sep = ">"):
+         frag_set_of_sources[i].add(j.split(sep = "__")[1])
+         the_all_set.add(j.split(sep = "__")[1])
+         frag_starts[i + "_" + j.split(sep = "__")[1]] = j.split(sep = "__")[0].split(sep = ";")[0]
+         frag_ends[i + "_" + j.split(sep = "__")[1]] = j.split(sep = "__")[0].split(sep = ";")[1]
+      
+      frag_counts[i] = rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sums"].values[0]
+      frag_counts_list.append(rd_filtered_counts.loc[rd_filtered_counts["ID"] == i, :]["sums"].values[0])
+      list_of_frags.append(i)
+      lengths_frags.append(len(frag_set_of_sources[i]))
+
+   the_all_length = len(the_all_set)
+
+   fragments_to_plot = [list_of_frags[i] for i in range(0, len(list_of_frags)) if lengths_frags[i] == max(lengths_frags)]
+   max_fragments = [list_of_frags[i] for i in range(0, len(list_of_frags)) if frag_counts_list[i] == max(frag_counts_list)]
+
+   if len(max_fragments) > 1:
+      max_fragments = [max_fragments[0]]
+
+   partial_sources_counts = defaultdict(int)
+
+   for key in frag_counts:
+      num_temp = len(frag_set_of_sources[key])
+      count_temp = frag_counts[key] / num_temp
+
+      for source in frag_set_of_sources[key]:
+         partial_sources_counts[source] += count_temp
+
+   all_maxes = []
+   for temp in frag_set_of_sources[max_fragments[0]]:
+      all_maxes.append(temp)
+
+   part_source = []
+
+   if len(all_maxes) > 0:
+      for sour in all_maxes:
+         part_source.append(partial_sources_counts[sour])
+      the_max_source = all_maxes[part_source.index(max(part_source))]
+   else:
+      the_max_source = all_maxes[0]
+
+   the_max_start = int(frag_starts[max_fragments[0] + "_" + the_max_source]) - 1
+   the_max_end = int(frag_ends[max_fragments[0] + "_" + the_max_source]) - 1
+
+   total_counts = [partial_sources_counts[i] for i in partial_sources_counts]
+   total_counts = sum(total_counts)
+
+   for frag in fragments_to_plot:
+      skipper = 0
+      global_sub = 0
+      global_add = 0
+      changer = False
+      with open("temp_" + frag.replace("-", "_") + ".fa", "w") as new:
+
+         for source in frag_set_of_sources[frag]:
+            skip_run = False
+            if skipper == 0:
+               if the_max_source in frag_set_of_sources[frag]:
+                  if source == the_max_source:
+                     do_not_run = True
+                  else:
+                     do_not_run = False
+                  skipped_source = source
+                  source = the_max_source
+                  skipper += 1
+                  skip_run = True
+            elif do_not_run == True:
+               do_not_run = True
+            elif skipped_source != source:
+               int_source = source
+               source = skipped_source
+               skipped_source = int_source
+               if skipped_source == the_max_source:
+                  do_not_run = True
+
+
+            temp_sequence = sequences[source]
+            temp_start = int(frag_starts[frag + "_" + source]) -1
+            temp_end = int(frag_ends[frag + "_" + source])-1
+
+            num_to_subtract = 5 + global_sub
+
+            while temp_start - num_to_subtract < 0:
+               num_to_subtract += -1
+
+               if num_to_subtract == 0:
+                  break
+
+            if skip_run == True:
+               plot_max_start = ""
+               while temp_start - num_to_subtract > the_max_start:
+                  num_to_subtract += 1
+                  plot_max_start = 0
+                  global_sub += 1
+
+               if plot_max_start != 0:
+                  plot_max_start = the_max_start - (temp_start - num_to_subtract) + 1
+            
+            num_to_add = 5 + global_add
+
+            while temp_end - num_to_add > len(temp_sequence):
+               num_to_add += -1
+
+               if num_to_add == 0:
+                  break
+
+            if skip_run == True:
+               plot_max_end = ""
+               while temp_end + num_to_add < the_max_end:
+                  num_to_add += 1
+                  global_add += 1
+                  changer = True
+
+               if plot_max_end != temp_end + num_to_add:
+                  plot_max_end = the_max_end - temp_start + num_to_subtract
+
+            new_temp_start = temp_start - num_to_subtract
+            new_temp_end = temp_end + num_to_add
+
+            if changer == True:
+               plot_max_end = new_temp_end - new_temp_start
+
+            if skip_run == True:
+               new.write(">" + source + "_(" + str(round((partial_sources_counts[the_max_source] / total_counts) * 100, 2)) + "%)" +  "\n" + temp_sequence[new_temp_start:new_temp_end] + "\n")
+
+               max_length = len(temp_sequence[new_temp_start:new_temp_end])
+            else:
+               new.write(">" + source + "_(" + str(round((partial_sources_counts[source] / total_counts) * 100, 2)) + "%)" +  "\n" + temp_sequence[new_temp_start:new_temp_end] + "-"*(max_length - len(temp_sequence[new_temp_start:new_temp_end])) + "\n")
+
+      mv = MsaViz(os.getcwd() + "/temp_" + frag.replace("-", "_") + ".fa", show_count=True)
+      mv.add_text_annotation((num_to_subtract + 1, temp_end - temp_start + num_to_subtract ), text = "Frag " + str(len(frag_set_of_sources[frag])) + "/" + str(the_all_length), text_color = "red", range_color = "red")
+      mv.add_markers([plot_max_end, plot_max_start])
+      mv.savefig(outdir + "/" + frag + ".png")
+
+      os.system("rm " + "temp_" + frag.replace("-", "_") + ".fa")
+
+def inner_plot_fragment_ratio_norm(norm_table, sample_sheet, out_name, group1, group2):
+    p_values = [] # we want to export p values for each with respective means
+    mean_group1_selector = []
+    mean_group1 = []
+    mean_group2_selector = []
+    mean_group2 = []
+    totals = defaultdict(int)
+
+    i = 0
+    with open(sample_sheet, "r") as sample_data:
+        for line in sample_data:
+            if i == 0:
+                i += 1
+                continue
+            else:
+                stripped = line.strip("\n")
+                sep = stripped.split(sep = ",")
+
+                if sep[1] == group1:
+                    mean_group1_selector.append(sep[0])
+                elif sep[1] == group2:
+                    mean_group2_selector.append(sep[0])
+
+
+    norm_data = pd.read_csv(norm_table)
+    fragment_names = list(norm_data["new_id"])
+    frag_names_filt = []
+
+    group1_data = norm_data[mean_group1_selector]
+    group2_data = norm_data[mean_group2_selector]
+
+    asdf = 0
+
+    for row in range(0,len(group1_data)):
+        group1_rowdata = list(group1_data.iloc[row, :])
+        group2_rowdata = list(group2_data.iloc[row, :])
+
+        if asdf == 0:
+            allsums_g1 = group1_data.iloc[row, :]
+            allsums_g2 = group2_data.iloc[row, :]
+            asdf += 1
+        else:
+            allsums_g1 = allsums_g1 + group1_data.iloc[row, :]
+            allsums_g2 = allsums_g2 + group2_data.iloc[row, :]
+        
+        if np.median(group1_rowdata) == 0:
+            continue
+        elif np.median(group2_rowdata) == 0:
+            continue
+
+        p_values.append(ranksums(group1_rowdata, group2_rowdata)[1])
+        mean_group1.append(np.mean(group1_rowdata))
+        mean_group2.append(np.mean(group2_rowdata))
+        frag_names_filt.append(fragment_names[row])
+
+    mean_group1.append(np.mean(allsums_g1))
+    mean_group2.append(np.mean(allsums_g2))
+
+    fdr = list(fdrcorrection(p_values)[1])
+
+    fdr.append("NA")
+    frag_names_filt.append("Overall")
+    p_values.append(ranksums(allsums_g1, allsums_g2)[1])
+
+    analyzed = pd.DataFrame(list(zip(frag_names_filt, mean_group1, mean_group2, p_values, fdr)), columns=["ID",group1, group2, "p", "FDR"])
+    analyzed.to_csv(out_name, index = False)
+
+def generate_blank_sample_sheet(norm_table, outname):
+    table = pd.read_csv(norm_table)
+    colnames = list(table.columns)
+
+    with open(outname, "w") as new:
+        new.write("sample,info\n")
+        for name in colnames:
+            if name == "new_id":
+                continue
+            elif name == "original_id_set":
+                continue
+            elif name == "outside_maps":
+                continue
+            else:
+                new.write(name + ",\n")
+
+def generate_joined_sample_sheet(norm_table, sample_sheet, colname, sampcol, outname):
+    table = pd.read_csv(norm_table)
+    sample_sheet = pd.read_csv(sample_sheet)
+
+    sample_sheet_samples = list(sample_sheet[sampcol])
+    sample_sheet_att = list(sample_sheet[colname])
+
+    colnames = list(table.columns)
+
+    with open(outname, "w") as new:
+        new.write("sample,info\n")
+        for name in colnames:
+            if name == "new_id":
+                continue
+            elif name == "original_id_set":
+                continue
+            elif name == "outside_maps":
+                continue
+            else:
+                j = 0
+                for sample_partial in sample_sheet_samples:
+                    if sample_partial in name:
+                        new.write(name + ",")
+                        new.write(sample_sheet_att[j] + "\n")
+                    
+                    j += 1
+
+
+# cpm_norm
+def cpm_norm(merged_counts, num_reads, outname):
+   rd_merged_counts = pd.read_csv(merged_counts)
+   rd_bam_counts = pd.read_csv(num_reads)
+
+   rd_merged_counts = rd_merged_counts.drop(["original_id_set", "outside_maps"], axis = 1)
+   rd_merged_counts.index = rd_merged_counts["new_id"]
+   rd_merged_counts = rd_merged_counts.drop(["new_id"], axis = 1)
+
+   num_read_dict = defaultdict(int)
+
+   for i,j in zip(rd_bam_counts["sample"], rd_bam_counts["n"]):
+      temp_sample = i.replace("-", ".")
+      num_read_dict[temp_sample] = j
+
+   for key in num_read_dict:
+      rd_merged_counts[key] = (rd_merged_counts[key] / num_read_dict[key]) * 1000000
+
+   rd_merged_counts.to_csv(outname)
+
+# generate miRNA controls
+def generate_merged_fragments_ratio_norm(mir_counts, merged_counts, outname):
+    skip_list = []
+    i = 0
+    
+    with open(mir_counts, "r") as find_lines:
+        for row in find_lines:
+            if "#" in row or "Length" in row:
+                i += 1
+                continue
+            else:
+                temp_list = [int(i) for i in row.split(sep = "\t")[6:]]
+                
+                if np.median(temp_list) != 0:
+                    i += 1
+                    continue
+                else:
+                    skip_list.append(i)
+
+            i += 1
+    
+    
+    mir_counts_table = pd.read_csv(mir_counts, sep = "\t", skiprows = [0] + skip_list)
+
+    # display(plt.hist(mir_counts_table.iloc[:,6:].sum(axis = 0), bins = 300))
+
+    norm_factors = mir_counts_table.iloc[:,6:].sum(axis = 0)
+
+    indicies = list(norm_factors.index)
+
+    merged_counts_table = pd.read_csv(merged_counts)
+
+    k = 0
+
+    for j in norm_factors:
+        sample_name = indicies[k]
+        
+        sample_name = sample_name.split(sep = "_")
+
+        sample_name = "_".join(sample_name[1:])
+
+        sample_name = sample_name.split(sep = ".")
+
+        sample_name = ".".join(sample_name[0:-2])
+
+        if sample_name not in merged_counts_table:
+            sample_name = sample_name.replace("-", ".")
+            if sample_name not in merged_counts_table:
+                raise ValueError("Sample column key could not be automatically found. Change col names.")
+            
+        merged_counts_table[sample_name] = (merged_counts_table[sample_name] / j) * 1000
+
+        k += 1
+
+    merged_counts_table.to_csv(outname, index = False)
+
+
+# Generate miRNA control with AASRA counting => Human
+# needs to be processed samples
+def generate_mirna_controls_hsa(sample_dir, outname):
+   # put the index in sample dir
+   os.system("cp pub_figs/*.bt2 " + sample_dir)
+   os.system("cp pub_figs/mirna_mature.saf " + sample_dir)
+
+   samples = os.listdir(sample_dir)
+
+   gzip = False
+
+   for sample in samples:
+      if ".gz" in sample:
+         gzip = True
+
+   if gzip == True:
+      os.system("cd " + sample_dir + ";\
+                 gunzip *.fastq.gz")
+
+   os.system("cd " + sample_dir + ";\
+            for file in *.fastq; do\
+            AASRA -i $file -l CCC -r GGG -b anchored_mature.fa;\
+            done")
+   
+   os.system("cd " + sample_dir + ";\
+             featureCounts -a mirna_mature.saf -F SAF -o " + outname + " *.sam -O -M --fraction")
+
+# TPM normalization
+def tpm_norm(merged_sources_tables, ref_table, filtered_corrected_counts, cluster_peak_relation, merged_counts, mirna_control, outname):
+   rd_merged_sources_table = pd.read_csv(merged_sources_tables)
+   rd_filtered_corrected_counts = pd.read_csv(filtered_corrected_counts)
+   rd_ref_table = pd.read_csv(ref_table)
+   rd_clust_peak = pd.read_csv(cluster_peak_relation)
+   rd_merged_counts = pd.read_csv(merged_counts)
+   rd_mir_control = pd.read_csv(mirna_control, skiprows = 1, sep = "\t")
+
+   merged_id_list = list(rd_merged_sources_table["merged_id"])
+
+   new_column_constructor = []
+
+   for merged_id in merged_id_list:
+
+      selected_ms_table = rd_merged_sources_table.loc[rd_merged_sources_table["merged_id"] == merged_id,:]
+
+      all_ids = list(selected_ms_table["source_set"])[0]
+
+      all_ids = all_ids.replace("{", "")
+
+      all_ids = all_ids.replace("}", "")
+
+      all_ids = all_ids.replace("'", "")
+
+      all_ids = all_ids.split(sep = "; ")
+
+      selected_ref_table = rd_ref_table.loc[rd_ref_table["new_id"] == merged_id, :]
+
+      fragment_lps = []
+      fragment_counts = defaultdict(int)
+
+      # ID_source_int
+      fragment_starts = defaultdict(int)
+      fragment_ends = defaultdict(int)
+
+      # Source:Fragment
+      source_frag = defaultdict(list)
+
+      if len(all_ids) == 1:
+         selected_ref_table = rd_ref_table.loc[rd_ref_table["new_id"] == merged_id, :]
+
+         cluster_subset_info = rd_clust_peak.loc[rd_clust_peak["source"] == source_id,:]
+         cluster_subset_info = cluster_subset_info.loc[cluster_subset_info["primary_cluster_peak"] == True, :]
+
+         # Firstly, identify what cluster the fragment belongs to for start
+         fragments = []
+
+         starts_storage = []
+         ends_storage = []
+
+         for frag in source_frag[source_id]:
+            fragments.append(frag)
+            starts_storage.append(fragment_starts[frag + "_" + source_id])
+            ends_storage.append(fragment_ends[frag + "_" + source_id])
+
+         start_subset = cluster_subset_info.loc[cluster_subset_info["type"] == "start",:]
+
+         current_min = 0
+         start_loci = 0
+         starts_avg = np.mean(starts_storage)
+         ends_avg = np.mean(ends_storage)
+
+         for row in start_subset.iterrows():
+            if current_min == 0:
+               current_min = abs(starts_avg - list(row[1])[0]) + 0.01
+               start_loci = list(row[1])[0]
+
+            else:
+               if current_min > abs(starts_avg - list(row[1])[0]):
+                  current_min = abs(starts_avg - list(row[1])[0]) + 0.01
+                  start_loci = list(row[1])[0]
+
+         end_subset = cluster_subset_info.loc[cluster_subset_info["type"] == "end", :]
+
+         current_min = 0
+         end_loci = 0
+
+         for row in end_subset.iterrows():
+            
+            if current_min == 0:
+               current_min = abs(ends_avg - list(row[1])[0]) + 0.01
+               end_loci = list(row[1])[0]
+
+            else:
+               if current_min > abs(ends_avg - list(row[1])[0]):
+                  current_min = abs(ends_avg - list(row[1])[0]) + 0.01
+                  end_loci = list(row[1])[0]
+
+         new_column_constructor.append(end_loci - start_loci + 1)
+         continue
+
+      for line in selected_ref_table.iterrows():
+         fragment_temp = list(line[1])[0]
+         
+         fragment_lps.append(fragment_temp)
+         fragment_counts[list(line[1])[0]] = list(rd_filtered_corrected_counts.loc[rd_filtered_corrected_counts["ID"] == list(line[1])[0],:]["sums"])[0]
+
+         temp_souce_info = list(rd_filtered_corrected_counts.loc[rd_filtered_corrected_counts["ID"] == list(line[1])[0],:]["sources"])[0]
+
+         temp_source_split = temp_souce_info.split(sep = ">")
+
+
+         for item in temp_source_split:
+            start_temp = item.split(sep = "__")[0].split(sep = ";")[0]
+            end_temp = item.split(sep = "__")[0].split(sep = ";")[1]
+            source_temp = item.split(sep = "__")[1]
+
+            fragment_starts[fragment_temp + "_" + source_temp] = (int(start_temp))
+            fragment_ends[fragment_temp + "_" + source_temp] = (int(end_temp))
+
+            source_frag[source_temp].append(fragment_temp)
+
+      list_of_dists = []
+
+      for source_id in all_ids:
+         cluster_subset_info = rd_clust_peak.loc[rd_clust_peak["source"] == source_id,:]
+         cluster_subset_info = cluster_subset_info.loc[cluster_subset_info["primary_cluster_peak"] == True, :]
+
+         # Firstly, identify what cluster the fragment belongs to for start
+         fragments = []
+
+         starts_storage = []
+         ends_storage = []
+
+         for frag in source_frag[source_id]:
+            fragments.append(frag)
+            starts_storage.append(fragment_starts[frag + "_" + source_id])
+            ends_storage.append(fragment_ends[frag + "_" + source_id])
+
+         start_subset = cluster_subset_info.loc[cluster_subset_info["type"] == "start",:]
+
+         current_min = 0
+         start_loci = 0
+         starts_avg = np.mean(starts_storage)
+         ends_avg = np.mean(ends_storage)
+
+         for row in start_subset.iterrows():
+            if current_min == 0:
+               current_min = abs(starts_avg - list(row[1])[0]) + 0.01
+               start_loci = list(row[1])[0]
+
+            else:
+               if current_min > abs(starts_avg - list(row[1])[0]):
+                  current_min = abs(starts_avg - list(row[1])[0]) + 0.01
+                  start_loci = list(row[1])[0]
+
+         end_subset = cluster_subset_info.loc[cluster_subset_info["type"] == "end", :]
+
+         current_min = 0
+         end_loci = 0
+
+         for row in end_subset.iterrows():
+            
+            if current_min == 0:
+               current_min = abs(ends_avg - list(row[1])[0]) + 0.01
+               end_loci = list(row[1])[0]
+
+            else:
+               if current_min > abs(ends_avg - list(row[1])[0]):
+                  current_min = abs(ends_avg - list(row[1])[0]) + 0.01
+                  end_loci = list(row[1])[0]
+
+         list_of_dists.append(end_loci - start_loci + 1)
+
+      new_column_constructor.append(int(np.median(list_of_dists)))
+
+   rd_merged_sources_table["length"] = new_column_constructor
+
+   merged_table = pd.merge(rd_merged_counts, rd_merged_sources_table[["merged_id", "length"]], how = "left", left_on = "new_id", right_on = "merged_id")
+
+   length_vector = list(merged_table["length"])
+
+   rd_merged_counts = rd_merged_counts.drop(["outside_maps", "original_id_set"], axis = 1)
+
+   rd_merged_counts.index = rd_merged_counts["new_id"]
+
+   rd_merged_counts = rd_merged_counts.drop(["new_id"], axis = 1)
+
+   divided_counts = rd_merged_counts.divide(length_vector, axis = 0)
+
+   rd_mir_control.index = rd_mir_control["Geneid"]
+
+   mir_length_vector = rd_mir_control["Length"]
+
+   rd_mir_control = rd_mir_control.drop(["Geneid", "Chr", "Start", "End", "Length", "Strand"], axis = 1)
+
+   mir_normfactor = defaultdict(int)
+
+   for sample,count in zip(rd_mir_control.divide((mir_length_vector - 20), axis = "rows").sum(axis = 0).index, rd_mir_control.divide((mir_length_vector - 20), axis = "rows").sum(axis = 0)):
+      sampname = sample.replace("anchored_", "")
+      sampname = sampname.replace(".fastq.sam", "")
+      sampname = sampname.replace("-", ".")
+
+      mir_normfactor[sampname] = count
+
+   for norm_facotr in mir_normfactor:
+      divided_counts[norm_facotr] = (divided_counts[norm_facotr] / mir_normfactor[norm_facotr] ) * 10**6
+
+   divided_counts.to_csv(outname, index = True)   
+
+# Add the primary source
+def add_primary_source_to_ref(merged_sources_tables, ref_table, filtered_corrected_counts, cluster_peak_relation, outname):
+   rd_merged_sources_table = pd.read_csv(merged_sources_tables)
+   rd_filtered_corrected_counts = pd.read_csv(filtered_corrected_counts)
+   rd_ref_table = pd.read_csv(ref_table)
+   rd_clust_peak = pd.read_csv(cluster_peak_relation)
+
+   merged_id_list = list(rd_merged_sources_table["merged_id"])
+
+   new_column_constructor = []
+
+   for merged_id in merged_id_list:
+
+      selected_ms_table = rd_merged_sources_table.loc[rd_merged_sources_table["merged_id"] == merged_id,:]
+
+      all_ids = list(selected_ms_table["source_set"])[0]
+
+      all_ids = all_ids.replace("{", "")
+
+      all_ids = all_ids.replace("}", "")
+
+      all_ids = all_ids.replace("'", "")
+
+      all_ids = all_ids.split(sep = "; ")
+
+      if len(all_ids) == 1:
+         new_column_constructor.append(all_ids[0])
+         continue
+
+      selected_ref_table = rd_ref_table.loc[rd_ref_table["new_id"] == merged_id, :]
+
+      fragment_lps = []
+      fragment_counts = defaultdict(int)
+
+      # ID_source_int
+      fragment_starts = defaultdict(int)
+      fragment_ends = defaultdict(int)
+
+      # Source:Fragment
+      source_frag = defaultdict(list)
+      for line in selected_ref_table.iterrows():
+         fragment_temp = list(line[1])[0]
+         
+         fragment_lps.append(fragment_temp)
+         fragment_counts[list(line[1])[0]] = list(rd_filtered_corrected_counts.loc[rd_filtered_corrected_counts["ID"] == list(line[1])[0],:]["sums"])[0]
+
+         temp_souce_info = list(rd_filtered_corrected_counts.loc[rd_filtered_corrected_counts["ID"] == list(line[1])[0],:]["sources"])[0]
+
+         temp_source_split = temp_souce_info.split(sep = ">")
+
+
+         for item in temp_source_split:
+            start_temp = item.split(sep = "__")[0].split(sep = ";")[0]
+            end_temp = item.split(sep = "__")[0].split(sep = ";")[1]
+            source_temp = item.split(sep = "__")[1]
+
+            fragment_starts[fragment_temp + "_" + source_temp] = (int(start_temp))
+            fragment_ends[fragment_temp + "_" + source_temp] = (int(end_temp))
+
+            source_frag[source_temp].append(fragment_temp)
+
+      source_count_dict_start = defaultdict(int)
+      source_count_dict_end = defaultdict(int)
+
+      for source_id in all_ids:
+         cluster_subset_info = rd_clust_peak.loc[rd_clust_peak["source"] == source_id,:]
+         cluster_subset_info = cluster_subset_info.loc[cluster_subset_info["primary_cluster_peak"] == True, :]
+
+         # Firstly, identify what cluster the fragment belongs to for start
+         fragments = []
+
+         starts_storage = []
+         ends_storage = []
+
+         for frag in source_frag[source_id]:
+            fragments.append(frag)
+            starts_storage.append(fragment_starts[frag + "_" + source_id])
+            ends_storage.append(fragment_ends[frag + "_" + source_id])
+
+         source_count_dict_start[source_id] = np.sum(starts_storage)
+         source_count_dict_end[source_id] = np.sum(ends_storage)
+
+      # create the start sources
+      start_source = []
+      start_count = []
+      for source in source_count_dict_start:
+         start_source.append(source)
+         start_count.append(source_count_dict_start[source])
+      start_source_names = [start_source[i] for i in range(len(start_count)) if start_count[i] == max(start_count)]
+
+      end_source = []
+      end_count = []
+      for source in source_count_dict_end:
+         end_source.append(source)
+         end_count.append(source_count_dict_end[source])
+      end_sources_name = [end_source[i] for i in range(len(end_count)) if end_count[i] == max(end_count)]
+
+      prim_source_temp = set()
+
+      for n in start_source_names:
+         prim_source_temp.add(n)
+      for n in end_sources_name:
+         prim_source_temp.add(n)
+
+      new_column_constructor.append(str(prim_source_temp))
+
+   rd_merged_sources_table["primary_sources"] = new_column_constructor
+   rd_merged_sources_table.to_csv(outname,index=False)
+
+# Plot distribution
+def plot_merged_ids_distribution(merged_sources_tables, merged_id, ref_table, filtered_corrected_counts, cluster_peak_relation, outname):
+   rd_merged_sources_table = pd.read_csv(merged_sources_tables)
+   rd_filtered_corrected_counts = pd.read_csv(filtered_corrected_counts)
+   rd_ref_table = pd.read_csv(ref_table)
+   rd_clust_peak = pd.read_csv(cluster_peak_relation)
+
+   selected_ms_table = rd_merged_sources_table.loc[rd_merged_sources_table["merged_id"] == merged_id,:]
+
+   all_ids = list(selected_ms_table["source_set"])[0]
+
+   all_ids = all_ids.replace("{", "")
+
+   all_ids = all_ids.replace("}", "")
+
+   all_ids = all_ids.replace("'", "")
+
+   all_ids = all_ids.split(sep = "; ")
+
+   if len(all_ids) == 1:
+      raise ValueError("Only one source is associated.")
+
+   selected_ref_table = rd_ref_table.loc[rd_ref_table["new_id"] == merged_id, :]
+
+   fragment_lps = []
+   fragment_counts = defaultdict(int)
+
+   # ID_source_int
+   fragment_starts = defaultdict(int)
+   fragment_ends = defaultdict(int)
+
+   # Source:Fragment
+   source_frag = defaultdict(list)
+   for line in selected_ref_table.iterrows():
+      fragment_temp = list(line[1])[0]
+      
+      fragment_lps.append(fragment_temp)
+      fragment_counts[list(line[1])[0]] = list(rd_filtered_corrected_counts.loc[rd_filtered_corrected_counts["ID"] == list(line[1])[0],:]["sums"])[0]
+
+      temp_souce_info = list(rd_filtered_corrected_counts.loc[rd_filtered_corrected_counts["ID"] == list(line[1])[0],:]["sources"])[0]
+
+      temp_source_split = temp_souce_info.split(sep = ">")
+
+
+      for item in temp_source_split:
+         start_temp = item.split(sep = "__")[0].split(sep = ";")[0]
+         end_temp = item.split(sep = "__")[0].split(sep = ";")[1]
+         source_temp = item.split(sep = "__")[1]
+
+         fragment_starts[fragment_temp + "_" + source_temp] = (int(start_temp))
+         fragment_ends[fragment_temp + "_" + source_temp] = (int(end_temp))
+
+         source_frag[source_temp].append(fragment_temp)
+
+   total_sources = len(source_frag) + 1
+
+   nrow = int(total_sources / 2)
+
+   plt.figure(figsize=(9,12))
+   plt.subplots_adjust(hspace=0.5)
+
+   js = 0
+   for source_id in all_ids:
+      ax = plt.subplot(2, nrow, js + 1)
+      ax.set_title(source_id)
+
+      cluster_subset_info = rd_clust_peak.loc[rd_clust_peak["source"] == source_id,:]
+      cluster_subset_info = cluster_subset_info.loc[cluster_subset_info["primary_cluster_peak"] == True, :]
+
+      # Firstly, identify what cluster the fragment belongs to for start
+      fragments = []
+
+      starts_storage = []
+      ends_storage = []
+
+      graph_builder_start = defaultdict(int)
+      graph_builder_end = defaultdict(int)
+
+      for frag in source_frag[source_id]:
+         fragments.append(frag)
+         starts_storage.append(fragment_starts[frag + "_" + source_id])
+         ends_storage.append(fragment_ends[frag + "_" + source_id])
+
+      starts_avg = np.mean(starts_storage)
+      ends_avg = np.mean(ends_storage)
+
+      start_subset = cluster_subset_info.loc[cluster_subset_info["type"] == "start",:]
+
+      current_min = 0
+      start_loci = 0
+
+      for row in start_subset.iterrows():
+         if current_min == 0:
+            current_min = abs(starts_avg - list(row[1])[0]) + 0.01
+            start_loci = list(row[1])[0]
+
+         else:
+            if current_min > abs(starts_avg - list(row[1])[0]):
+               current_min = abs(starts_avg - list(row[1])[0]) + 0.01
+               start_loci = list(row[1])[0]
+
+      end_subset = cluster_subset_info.loc[cluster_subset_info["type"] == "end", :]
+
+      current_min = 0
+      end_loci = 0
+
+      for row in end_subset.iterrows():
+         
+         if current_min == 0:
+            current_min = abs(ends_avg - list(row[1])[0]) + 0.01
+            end_loci = list(row[1])[0]
+
+         else:
+            if current_min > abs(ends_avg - list(row[1])[0]):
+               current_min = abs(ends_avg - list(row[1])[0]) + 0.01
+               end_loci = list(row[1])[0]
+
+      # build the start and end
+      for frag in source_frag[source_id]:
+         graph_builder_start[fragment_starts[frag + "_" + source_id] - start_loci] += fragment_counts[frag]
+         graph_builder_end[fragment_ends[frag + "_" + source_id] - end_loci] += fragment_counts[frag]
+
+      x_start = []
+      y_start = []
+
+      for l in graph_builder_start:
+         x_start.append(l)
+         y_start.append(graph_builder_start[l])
+      
+      x_end = []
+      y_end = []
+
+      for l in graph_builder_end:
+         x_end.append(l + 0.05)
+         y_end.append(graph_builder_end[l])
+
+      plt.scatter(x = x_start, y = y_start)
+      plt.scatter(x = x_end, y = y_end)
+
+      js += 1
+
+   plt.savefig(outname)
+
+# Detect what sources merged sequences originate from
+def merged_sources_table(ref_table, filtered_corrected_counts, output_name):
+   rd_ref_table = pd.read_csv(ref_table)
+   rd_filtered_corrected_counts = pd.read_csv(filtered_corrected_counts)
+
+   merged_table = pd.merge(rd_ref_table, rd_filtered_corrected_counts, how = 'left', left_on = "original_id", right_on = "ID")
+
+   sources_rel = defaultdict(set)
+
+   merged_ids = merged_table["new_id"]
+   sources_list = merged_table["sources"]
+
+   k = 0 
+   for i in sources_list:
+      list_of_sources = i.split(sep = ">")
+
+      for source in list_of_sources:
+         sources_rel[merged_ids[k]].add(source.split(sep = "__")[1])
+      k += 1
+   
+   with open(output_name, "w") as new:
+      new.write("merged_id,source_set\n")
+
+      for source_l in sources_rel:
+         new.write(source_l + "," + str(sources_rel[source_l]).replace(",", ";") + "\n")
 
 # Obtain RNA-fold plots of all potential sources
 # Given the original gtf file, merged_counts, and merged id. 
@@ -665,7 +1942,7 @@ def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
       start_clusts = start_clust["cluster"]
       set_start = set(start_clusts)
 
-      if len(set_start) == 1:
+      if len(set_start) > 0:
          for item in set_start:
             start_cluster_num = item
       else:
@@ -674,14 +1951,16 @@ def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
       if start_cluster_num == end_cluster_num:
          cluster_num = start_cluster_num
       else:
-         raise ValueError("Please raise github issue: analyze_srnafrag.py exception 1.")
+         #raise ValueError("Please raise github issue: analyze_srnafrag.py exception 1.")
+         cluster_num = start_cluster_num
+         print("cluster number differs.")
 
       end_loci = source_clusters_end.loc[source_clusters_end["primary_cluster_peak"] == True,:]
-      end_loci = source_clusters_end.loc[source_clusters_end["cluster"] == cluster_num, :]
-      end_loci = max(list(end_loci["loci"]))
+      end_loci = source_clusters_end.loc[source_clusters_end["cluster"] == end_cluster_num, :]
+      end_loci = max(list(end_loci["loci"])) - 1
 
       start_loci = source_clusters_start.loc[source_clusters_start["primary_cluster_peak"] == True,:]
-      start_loci = source_clusters_start.loc[source_clusters_start["cluster"] == cluster_num, :]
+      start_loci = source_clusters_start.loc[source_clusters_start["cluster"] == start_cluster_num, :]
       start_loci = max(list(start_loci["loci"]))
 
       the_id = source

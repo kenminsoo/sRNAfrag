@@ -6,6 +6,25 @@ from basics import *
 # - count # of times value in column appears
 # - count # of times an attribute appears
 
+# find number of possible sequences
+def possible_fragments(gtf_file, m, k):
+    total = 0
+    
+    with open(gtf_file, "r") as gtf:
+        for line in gtf:
+            sep = separate_gtf_line(line)
+            attributes = sep[1]
+            cols = sep[0]
+
+            length = int(cols[4]) - int(cols[3]) + 1
+
+            length = length
+
+            total_frags = (length * (m - k + 1)) - ((m * (m+1))/2) - ((m*(k-1))/2)
+
+            total += total_frags
+
+    return total
 # Input gtf file, if sequence exists, this will compare the extracted one (with bedtools) to see if any errors exist in the annotation
 def compare_sequence(gtf_file, output_name, sequence_feature1, sequence_feature2):
     # store data in here

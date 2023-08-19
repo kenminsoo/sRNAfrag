@@ -603,9 +603,11 @@ plt.clf()
 
 ref_table = pd.DataFrame.from_dict(merged_references)
 # No longer need you
-#ref_table.to_csv("ref_table.csv", index = False)
 
-os.system("mv ref_table.csv " + out_dir)
+if out_of_space_bool == False:
+    ref_table.to_csv("ref_table.csv", index = False)
+    os.system("mv ref_table.csv " + out_dir)
+
 os.system("mv P2_cluster_start_end_disagreement.jpeg " + out_dir)
 
 # Merge Tables
@@ -684,7 +686,7 @@ if out_of_space_bool:
         os.system('cd ' + working_dir + "; \
                 featureCounts -a anti_joined.gtf -F 'GTF' -g " + attribute_choice + " -t " + midcol + " -o matches.tsv sampled_sams/*.sam -O -M")
 
-    matches_df = pd.read_csv(working_dir + "/matches.tsv", sep = "\t", skiprows = 1)
+    matches_df = pd.read_csv(working_dir + "/matches.tsv", sep = "\t", skiprows = 1, low_memory=False)
 
     matches_df = matches_df.drop(["Chr", "Start", "End", "Strand", "Length"], axis = 1)
 

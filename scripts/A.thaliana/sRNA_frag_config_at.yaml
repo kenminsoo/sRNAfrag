@@ -26,7 +26,7 @@ module_options:
 
     # An annotation file to generate fragments from => Should be filtered with sequences
     annotation_options: 
-      location: "/Volumes/Extreme_SSD/a_thaliana/tair_rRNA_final.gtf"
+      location: "/Volumes/Extreme_SSD/a_thaliana/tair_snRNA_final.gtf"
     
     # Trim n number of bases from the 5' or 3' end during alignment
     trim5p3p:
@@ -88,8 +88,8 @@ system_options:
 # Use full paths, Do not end path with / (i.e. /bin/bash not /bin/bash/)
 dir_locations:
   # Set the working dir
-  working_dir: "/Volumes/Extreme_SSD/a_thaliana/working"
+  working_dir: "/Volumes/Extreme_SSD/a_thaliana/working3"
   # Location of samples (ENSURE *.fastq.gz)
   sample_dir: "/Volumes/Extreme_SSD/a_thaliana/samples"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/a_thaliana/out_rrna"
+  out_dir: "/Volumes/Extreme_SSD/a_thaliana/out_snrna"

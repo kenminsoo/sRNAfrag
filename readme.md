@@ -55,7 +55,7 @@ This creates a conda environment that has all the required package. This makes i
 Please check the `install/test_results/out/tables` directory after the install. There should be 7 tables. 
 
 #### Note about R!
-Sometimes, your package folder will not be in R lib path. If this occurs:
+Sometimes, your package folder will not be in R lib path. If this occurs, enter this:
 ```
 cd install
 cwd=$(pwd)

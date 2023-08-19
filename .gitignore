@@ -12,7 +12,6 @@ SPRMT_merge_031323_seq.gtf
 *.fasta
 .Rdata
 .Rhistory
-*.bt2
 mirna_to_snorna/
 mirna_to_snorna_mi/
 piRNAbank_to_pirnadb/

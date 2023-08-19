@@ -69,6 +69,27 @@ def add_sequence_gtf(gtf_file, ref_genome, output_name, attribute_name = "bed_se
 
             iter += 2
 
+def add_sequence_gtf_trna(gtf_file, ref_genome, output_name, attribute_name = "bed_sequence"):
+    
+    seq_list = add_sequence_fast(gtf_file, ref_genome)
+
+    with open(gtf_file, "r") as bed, open(output_name, "w") as new:
+        
+        iter = 1
+        
+        for line in bed:
+            extracted_sequence = seq_list[iter]
+
+            extracted_sequence = extracted_sequence.upper()
+
+            extracted_sequence = extracted_sequence + "CCA"
+
+            temp_line = line.strip()
+
+            new.write(temp_line + '; ' + attribute_name + ' "' + extracted_sequence + '"\n')
+
+            iter += 2
+
 # we define a new file type, bedseq format
 def add_sequence_bed(bed_file, ref_genome, output_name):
 

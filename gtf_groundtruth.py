@@ -293,7 +293,7 @@ def bowtie_align(new_dir, num_mismatch = 2, input_fasta = "sequences.fasta ", p 
 
 def bowtie_align_pipeline(index_name, working_dir, fasta):
     os.system('cd ' + working_dir + '; \
-    bowtie -f -x ' + index_name + ' ' + fasta +' -k 101 --best --strata -v 0 -S lookup_filtered.sam --reorder')
+    bowtie -f -x ' + index_name + ' ' + fasta +' -k 101 --best --strata -v 0 -S lookup_filtered.sam --reorder --norc')
 
 
 # Parse SAM File
