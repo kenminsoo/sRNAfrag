@@ -11,6 +11,8 @@ import os
 from pymsaviz import MsaViz, get_msa_testdata
 from statsmodels.stats.multitest import fdrcorrection
 from scipy.stats import ranksums
+from scipy.stats import chi2_contingency
+
 
 def separate_gtf_line(line):
     split_line = line.split(sep = "\t")
@@ -575,6 +577,368 @@ def decode_sequence(plate):
         raise KeyError("Error, exiting: Invalid license plate '" + plate + "'.")
 
     return final_result
+
+def plot_merged_length_distribution_by_sample(merged_id, merged_counts, filtered_counts, sample_sheet, meta_column, plot_title):
+    # Read in the merged_counts table
+    merged_counts = pd.read_csv(merged_counts)
+    filtered_counts = pd.read_csv(filtered_counts)
+    sample_sheet = pd.read_csv(sample_sheet)
+    
+    meta_set = set(list(sample_sheet[meta_column]))
+    
+    sample_mapping = {}
+    
+    for char in meta_set:
+        if char not in sample_mapping:
+            sample_mapping.update({char:[]})
+            
+        for i in sample_sheet.loc[sample_sheet[meta_column] == char, :].iterrows():
+            sample_mapping[char].append(i[1]["sample"])
+    
+    # Now find the row
+    target_row = merged_counts.loc[merged_counts["new_id"] == merged_id, :]
+    
+    target_set = target_row["original_id_set"]
+    
+    listed_set = list(target_set)[0]
+    
+    listed_form_set = eval(listed_set)
+    
+    # Obtain prefix
+    prefix = list(filtered_counts["ID"])[-1].split(sep = "-")[0]
+    
+    data_dict = {}
+    
+    for i in listed_form_set:
+        extracted_row = filtered_counts.loc[filtered_counts["ID"] == prefix + '-' + i, :]
+        current_length = list(extracted_row["length"])[0]
+        
+        for char in meta_set:
+            if char not in data_dict:
+                data_dict.update({char:{}})
+                
+            if current_length not in data_dict[char]:
+                data_dict[char].update({current_length:0})
+            
+            for sample in sample_mapping[char]:
+                number_counts = list(extracted_row[sample])[0]
+                
+                data_dict[char][current_length] += number_counts
+    
+    df = pd.DataFrame([(category, length, count) for category, lengths in data_dict.items() for length, count in lengths.items()], columns=['Category', 'Length', 'Count'])
+    
+    dfchi = pd.DataFrame(data_dict).fillna(0)
+    
+    # Expanding the counts into individual rows for each length
+    expanded_df = df.loc[df.index.repeat(df['Count'])].reset_index(drop=True)
+    
+    chi2, p_value, dof, expected = chi2_contingency(dfchi)
+    
+    print(p_value)
+
+    # Creating the density plot
+    plt.figure(figsize=(10, 6))
+    sns.kdeplot(data=expanded_df, x='Length', hue='Category', fill=True, common_norm=False, alpha=0.5)
+    plt.title(plot_title + f'\nChi-Sq p-value: {p_value:.4f}')
+    plt.xlabel('Transcript Length')
+    plt.ylabel('Density')
+    plt.savefig(plot_title + ".png", dpi = 500)
+
+# Analyze fragmentation events for A to I Editing
+def A_to_I_events(filtered_counts, n, output):
+   print("WIP")
+
+# The two functions below are for finding events such as
+# Adenylation or Uridylation to the 3' or 5' ends
+
+# filter for only those that have the addition
+def nucleotide_list_filter(filtered_counts, length, output):
+   with open(filtered_counts, "r") as old,open(output, "w") as new:
+      i = 0
+      for line in old:
+         if i == 0:
+            new.write(line.replace('"', ""))
+            i += 1
+            continue
+
+         line = line.replace('"', "")
+
+         split_line = line.split(sep = ",")
+
+         line_info = split_line[-13]
+
+         ok = True
+         begin_ok = False
+
+         for j in line_info.split(sep = ">"):
+            loci_info = j.split(sep = "__")[0]
+
+            #check the start position
+            loci_info_start = int(loci_info.split(sep = ";")[0])
+
+            if ok == False:
+               continue
+
+            if loci_info_start > length:
+               ok = False
+            else:
+               begin_ok = True
+
+            if begin_ok == False:
+               continue
+            else:
+               license_plate = j.split(sep = "__")[1]
+               # now check the end position using license plate encoding
+               total_length = length + int(license_plate.split(sep = "-")[1]) + length
+
+               loci_info_end = int(loci_info.split(sep = ";")[1])
+
+               if loci_info_end <= total_length - length:
+                  ok = False
+               else:
+                  ok = True
+
+         if ok == False:
+            continue
+
+         new.write(line)
+
+# Should output a GTF file
+def add_nucleotide_list_n(filtered_counts, residue_list, length, output):
+   counts_table = pd.read_csv(filtered_counts)
+
+   dfs = []
+   for i in residue_list:
+      for j in residue_list:
+         temp_df = counts_table[["sequence", "ID"]]
+
+         temp_df["sequence"] = i.upper() * length + temp_df["sequence"].astype(str)
+         temp_df["sequence"] = temp_df["sequence"].astype(str) + j.upper() * length
+
+         temp_df["ID"] = i.upper() + "_" + temp_df["ID"].astype(str) + "_" + j.upper()
+
+         dfs.append(temp_df)
+
+   new_table = pd.concat(dfs, ignore_index=True)
+   # Table to generate new annotations from
+
+   run_name = output.lower().replace(".gtf", "")
+
+   with open(output, "w") as new:
+      for i in new_table.iterrows():
+         seq = list(i[1])[0]
+         id = list(i[1])[1]
+
+         entry = ["srnafrag", "srnafrag", "exon", '0', '0', ".","+",".", "transcript_id " + '"' + id + '"' + '; sequence "' + seq + '"; ' + 'biotype "pt_mod"']
+
+         new.write("\t".join(entry) + "\n")
+
+# for each fragment in the corrected counts table
+# find the closest peak
+# and calculate the mean peak deviation score
+# for each merged fragment
+# for each sample
+def mean_peak_dev_score(filtered_corrected_counts, peak_table, merged_counts, output):
+   final_start_constructor = defaultdict(list)
+   final_end_constructor = defaultdict(list)
+
+   rd_filtered_corrected_counts = pd.read_csv(filtered_corrected_counts)   
+   rd_peak_table = pd.read_csv(peak_table)
+   rd_merged_counts = pd.read_csv(merged_counts)
+
+   vector_names = rd_filtered_corrected_counts["ID"]
+   listed_names = list(vector_names)
+   listed_names_new = ["-".join(i.split(sep = "-")[-2:]) for i in listed_names]
+
+   rd_filtered_corrected_counts["ID"] = listed_names_new
+
+   for row in rd_merged_counts.iterrows():
+      merged_id = list(row[1])[0]
+      fragments = list(row[1])[-2]
+      # we need to multiply each source score by the proportion that source takes up, stored here
+      source_based_sample_multipler = defaultdict(list)
+
+      fragments = fragments.replace("[", "")
+      fragments = fragments.replace("]", "")
+      fragments = fragments.replace("'", "")
+      fragments = fragments.split(sep = ",")
+      fragments_filt = [i.strip(" ") for i in fragments]
+      if len(fragments) == 1:
+         continue
+      if sum(list(row[1])[1:-2]) < (5 * len(list(row[1])[1:-2])):
+         continue
+
+      filtered_df = rd_filtered_corrected_counts[rd_filtered_corrected_counts['ID'].isin(fragments_filt)]
+
+      source_lp_rel = defaultdict(list)
+      start_dict = defaultdict(int)
+      end_dict = defaultdict(int)
+
+      for source,id in zip(filtered_df["sources"],filtered_df["ID"]):
+         sources_split = source.split(sep = ">")
+         for info in sources_split:
+            loci_info = info.split(sep = "__")[0]
+            loci_sep = loci_info.split(sep = ";")
+            loci_sep_int = [int(i) for i in loci_sep]
+            source_id = info.split(sep = "__")[1]
+            start_dict[id +"_" + source_id] =loci_sep_int[0]
+            end_dict[id + "_" + source_id] = loci_sep_int[1]
+            source_lp_rel[source_id].append(id)
+
+      # consturction of start, end, and source:license plates done
+      source_scores_start = defaultdict(list)
+      source_scores_end = defaultdict(list)
+      keys_to_remove = []
+
+
+      for source in source_lp_rel:
+         print(source)
+         peak_temp = rd_peak_table[rd_peak_table["source"] == source]
+         peak_temp = peak_temp[peak_temp["primary_cluster_peak"] == True]
+
+         if len(peak_temp) > 2:
+            start_diff = defaultdict(list)
+            peak_start = defaultdict(int)
+            end_diff = defaultdict(list)
+            peak_end = defaultdict(int)
+            for fragment in source_lp_rel[source]:
+               for row in peak_temp.iterrows():
+                  deconsturcted = list(row[1])
+                  if deconsturcted[3] == "start":
+                     peak_start[deconsturcted[4]] = deconsturcted[0]
+                     start_diff[deconsturcted[4]].append(abs(start_dict[fragment + "_" + source] - peak_start[deconsturcted[4]]))
+                  else:
+                     peak_end[deconsturcted[4]] = deconsturcted[0]
+                     end_diff[deconsturcted[4]].append(abs(end_dict[fragment + "_" + source] - peak_end[deconsturcted[4]]))
+            
+            start_cluster = 0
+            start_min = 100000
+            end_cluster = 0
+            end_min = 100000
+
+            # here we define the start and end cluster number if it is ambiguous
+            # assumed to be the minimum of the differences
+            for key in start_diff:
+               if np.mean(start_diff[key]) < start_min:
+                  start_cluster = key
+                  start_min = np.mean(start_diff[key])
+               if np.mean(end_diff[key]) < end_min:
+                  end_cluster = key
+                  end_min = np.mean(end_diff[key])
+
+            peak_start_loci = peak_start[start_cluster]
+            peak_end_loci = peak_end[end_cluster]
+            
+         elif len(peak_temp) == 2:
+            for row in peak_temp.iterrows():
+               deconsturcted = list(row[1])
+               if deconsturcted[3] == "start":
+                  peak_start_loci = deconsturcted[0]
+               else:
+                  peak_end_loci = deconsturcted[0]
+
+         # if there are no peaks then there is an issue
+         else:
+            peak_start_loci = 0
+            peak_end_loci =0
+
+         if peak_start_loci == 0:
+            print(f"{source} will be omitted from downstream analysis.")
+            keys_to_remove.append(source)
+            continue
+
+         # calculate fragment scores
+         scores = defaultdict(list)
+
+         # determination of start and end loci for the peak done (in source loop)
+
+         # create the distance score multiplier which is defined as
+         # (Peak - loci)^2
+         for fragment in source_lp_rel[source]:
+            # start
+            # absolute value just in case
+            scores[fragment].append((abs(peak_start_loci - start_dict[fragment + "_" + source]))**2)
+            # end
+            # absolute value just in case
+            scores[fragment].append((abs(peak_end_loci - end_dict[fragment + "_" + source]))**2)
+
+         # calculate the total sum for the source
+         source_specific_counts = rd_filtered_corrected_counts[rd_filtered_corrected_counts['ID'].isin(source_lp_rel[source])]
+
+         source_based_sample_multipler[source] = list(source_specific_counts.iloc[:,1:-13].sum(axis = 0))
+
+         source_based_vector = source_based_sample_multipler[source]
+
+         # total sum is calculated for the source
+         int_source_total_vector_i = 0
+
+         for row in source_specific_counts.iterrows():
+            fragment = row[1][-3]
+            counts_vector = list(row[1])[1:-13]
+
+            calculated_vector_start = []
+            calculated_vector_end = []
+            i = 0
+            for count in counts_vector:
+               if source_based_vector[i] == 0:
+                  calculated_vector_start.append(0)
+                  calculated_vector_end.append(0)
+                  i += 1
+                  continue
+
+               # Get the calculated start 
+               calculated_vector_start.append(scores[fragment][0] * (counts_vector[i] / source_based_vector[i]) * 100)
+
+               # Get the calculated end
+               calculated_vector_end.append(scores[fragment][1] * (counts_vector[i] / source_based_vector[i]) * 100)
+
+               i += 1
+
+            if int_source_total_vector_i == 0:
+               int_source_total_vector_start = calculated_vector_start
+               int_source_total_vector_end = calculated_vector_end
+               int_source_total_vector_i += 1
+            else:
+               int_source_total_vector_start = np.add(calculated_vector_start, int_source_total_vector_start)
+               int_source_total_vector_end = np.add(calculated_vector_end, int_source_total_vector_end)
+
+               
+         source_scores_start[source] = int_source_total_vector_start
+         source_scores_end[source] = int_source_total_vector_end
+
+      # print(source_scores_start)
+
+      source_total_for_merged = pd.DataFrame.from_dict(source_based_sample_multipler).sum(axis = 1).tolist()
+
+      kk = 0
+      for final_call_of_source in source_scores_start:
+         
+         proportion_of_merged_vector = np.divide(source_based_sample_multipler[final_call_of_source],source_total_for_merged)
+         proportion_of_merged_vector = np.nan_to_num(proportion_of_merged_vector)
+
+         final_sum_of_all_start = np.multiply(proportion_of_merged_vector, source_scores_start[final_call_of_source])
+         final_sum_of_all_end = np.multiply(proportion_of_merged_vector, source_scores_end[final_call_of_source])
+      
+         final_start_constructor[merged_id + "__" + final_call_of_source] = final_sum_of_all_start
+         final_end_constructor[merged_id + "__" + final_call_of_source] = final_sum_of_all_end
+
+         final_start_constructor[merged_id + "__" + final_call_of_source] = np.append(final_start_constructor[merged_id + "__" + final_call_of_source], [np.mean(proportion_of_merged_vector), np.var(proportion_of_merged_vector), np.mean(source_based_sample_multipler[final_call_of_source])])
+         final_end_constructor[merged_id + "__" + final_call_of_source] = np.append(final_end_constructor[merged_id + "__" + final_call_of_source], [np.mean(proportion_of_merged_vector), np.var(proportion_of_merged_vector), np.mean(source_based_sample_multipler[final_call_of_source])])
+
+   df_start = pd.DataFrame.from_dict(final_start_constructor, orient='index', columns=list(rd_merged_counts.columns[1:-2]) + ["mean_prop", "variance_prop", "mean_reads"])
+   df_end = pd.DataFrame.from_dict(final_end_constructor, orient='index', columns=list(rd_merged_counts.columns[1:-2]) + ["mean_prop", "variance_prop", "mean_reads"])
+   
+   df_start["source_transcript"] = df_start.index
+   df_end["source_transcript"] = df_end.index
+
+   df_start[["ID", "transcript"]] = df_start.source_transcript.str.split("__", expand = True)
+   df_end[["ID", "transcript"]] = df_start.source_transcript.str.split("__", expand = True)
+
+   df_start.drop("source_transcript",inplace=True, axis = 1)
+   df_end.drop("source_transcript",inplace=True, axis = 1)
+
+   df_start.to_csv(output + "_start.csv")
+   df_end.to_csv(output + "_end.csv")
 
 # Compare license plates
 # Counts should be two columns, a key and an ID, skip first row to get straight to data
@@ -1221,11 +1585,15 @@ def create_msa_plot(gtf, filtered_counts, ref_table, merged_id, outdir):
                plot_max_end = new_temp_end - new_temp_start
 
             if skip_run == True:
+               print(source)
+               print(temp_sequence)
+               print(temp_start)
+               print(temp_end)
                new.write(">" + source + "_(" + str(round((partial_sources_counts[the_max_source] / total_counts) * 100, 2)) + "%)" +  "\n" + temp_sequence[new_temp_start:new_temp_end] + "\n")
 
                max_length = len(temp_sequence[new_temp_start:new_temp_end])
             else:
-               new.write(">" + source + "_(" + str(round((partial_sources_counts[source] / total_counts) * 100, 2)) + "%)" +  "\n" + temp_sequence[new_temp_start:new_temp_end] + "-"*(max_length - len(temp_sequence[new_temp_start:new_temp_end])) + "\n")
+               new.write(">" + source + "_(" + str(round((partial_sources_counts[source] / total_counts) * 100, 2)) + "%)" +  "\n" + "-"*(max_length - len(temp_sequence[new_temp_start:new_temp_end])) + temp_sequence[new_temp_start:new_temp_end] + "\n")
 
       mv = MsaViz(os.getcwd() + "/temp_" + frag.replace("-", "_") + ".fa", show_count=True)
       mv.add_text_annotation((num_to_subtract + 1, temp_end - temp_start + num_to_subtract ), text = "Frag " + str(len(frag_set_of_sources[frag])) + "/" + str(the_all_length), text_color = "red", range_color = "red")
@@ -1344,7 +1712,6 @@ def generate_joined_sample_sheet(norm_table, sample_sheet, colname, sampcol, out
                     
                     j += 1
 
-
 # cpm_norm
 def cpm_norm(merged_counts, num_reads, outname):
    rd_merged_counts = pd.read_csv(merged_counts)
@@ -1378,7 +1745,7 @@ def generate_merged_fragments_ratio_norm(mir_counts, merged_counts, outname, rem
             else:
                 temp_list = [int(i) for i in row.split(sep = "\t")[6:]]
                 
-                if np.median(temp_list) != 0:
+                if np.min(temp_list) != 0:
                     i += 1
                     continue
                 else:
@@ -1931,6 +2298,27 @@ def merged_sources_table(ref_table, filtered_corrected_counts, output_name):
       for source_l in sources_rel:
          new.write(source_l + "," + str(sources_rel[source_l]).replace(",", ";") + "\n")
 
+# plot with start, end, and sequence
+def rna_fold_seq_se(sequence, start, end, name, out_dir):
+      os.system("cd " + out_dir + ";\
+                echo " + sequence + "| RNAfold > temp.txt")
+      
+      with open(out_dir + "/temp.txt") as temp:
+         for line in temp:
+            if "(" in line:
+               listed_line = list(line)
+
+               mfe = listed_line[listed_line.index(" ") + 1:-1]
+
+               mfe_num = "".join(mfe)
+
+               mfe_num = mfe_num.replace("(", "")
+               mfe_num = mfe_num.replace(")", "")
+
+      os.system("cd " + out_dir + ";\
+                echo " + sequence.upper() + '| RNAfold | RNAplot --pre "' + str(start) + ' ' + str(end) + ' 5 RED omark 1 2.5 -1 (' + mfe_num + ' kcal/mol) Label";\
+                mv rna.ps ' + name + ".ps")
+
 # Obtain RNA-fold plots of all potential sources
 # Given the original gtf file, merged_counts, and merged id. 
 def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
@@ -1957,21 +2345,32 @@ def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
 
    source_info_df = selected_filtered.loc[:, "sources"]
 
-   dictionary_of_sources = defaultdict(list)
+   dictionary_of_sources_start = defaultdict(list)
+   dictionary_of_sources_end = defaultdict(list)
+   dictionary_of_counts_start = defaultdict(list)
+   dictionary_of_counts_end = defaultdict(list)
 
-   for row in source_info_df:
-      unpacked_data = row
+   for row in selected_filtered.iterrows():
+      unpacked_data = list(row[1])
 
-      sources = unpacked_data
+      source_packed = unpacked_data[-13]
+      counts_lp = unpacked_data[-1]
 
-      source_data = sources.split(sep = "__")
+      # need to ensure fully unpacked...
+      unpackaging_1 = source_packed.split(sep  = ">")
 
-      source_data[0] = source_data[0].split(sep=";")
+      for sources in unpackaging_1:
 
-      source_data[0] = [int(i) for i in source_data[0]]
+         source_data = sources.split(sep = "__")
 
-      dictionary_of_sources[source_data[1]].append(source_data[0][0])
-      dictionary_of_sources[source_data[1]].append(source_data[0][1])
+         source_data[0] = source_data[0].split(sep=";")
+
+         source_data[0] = [int(i) for i in source_data[0]]
+
+         dictionary_of_sources_start[source_data[1]].append(source_data[0][0])
+         dictionary_of_counts_start[source_data[1]].append(counts_lp)
+         dictionary_of_sources_end[source_data[1]].append(source_data[0][1])
+         dictionary_of_counts_end[source_data[1]].append(counts_lp)
 
    dictionary_of_sequences = defaultdict(str)
 
@@ -1987,7 +2386,7 @@ def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
          seq = attributes[attributes.index("sequence") + 1]
          seq = seq.replace('"', '')
 
-         if transcript_id in dictionary_of_sources:
+         if transcript_id in dictionary_of_sources_start:
             if transcript_id in dictionary_of_sequences:
                continue
             else:
@@ -1996,8 +2395,11 @@ def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
    for source in dictionary_of_sequences:
       source_clusters = cluster_table.loc[cluster_table["source"] == source,:]
 
-      smallest_loci = min(dictionary_of_sources[source])
-      biggest_loci = max(dictionary_of_sources[source])
+
+      smallest_loci = dictionary_of_sources_start[source][dictionary_of_counts_start[source].index(max(dictionary_of_counts_start[source]))]
+
+      #print(dictionary_of_sources)
+      biggest_loci = dictionary_of_sources_end[source][dictionary_of_counts_end[source].index(max(dictionary_of_counts_end[source]))]
 
       # find cluster closest to the one of interest
 
@@ -2035,12 +2437,13 @@ def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
          print("cluster number differs.")
 
       end_loci = source_clusters_end.loc[source_clusters_end["primary_cluster_peak"] == True,:]
-      end_loci = source_clusters_end.loc[source_clusters_end["cluster"] == end_cluster_num, :]
+      end_loci = end_loci.loc[source_clusters_end["cluster"] == end_cluster_num, :]
       end_loci = max(list(end_loci["loci"])) - 1
 
       start_loci = source_clusters_start.loc[source_clusters_start["primary_cluster_peak"] == True,:]
-      start_loci = source_clusters_start.loc[source_clusters_start["cluster"] == start_cluster_num, :]
-      start_loci = max(list(start_loci["loci"]))
+
+      start_loci = start_loci.loc[source_clusters_start["cluster"] == start_cluster_num, :]
+      start_loci = min(list(start_loci["loci"]))
 
       the_id = source
       the_id = the_id.replace('/', "-")
@@ -2062,7 +2465,7 @@ def rna_fold(merged_id, gtf, ref, filtered, cluster_tab, out_dir):
                mfe_num = mfe_num.replace(")", "")
 
       os.system("cd " + out_dir + ";\
-                echo " + dictionary_of_sequences[source] + '| RNAfold | RNAplot --pre "' + str(start_loci) + ' ' + str(end_loci) + ' 5 RED omark 1 2.5 -1 (' + mfe_num + ' kcal/mol) Label";\
+                echo " + dictionary_of_sequences[source].upper() + '| RNAfold | RNAplot --pre "' + str(start_loci) + ' ' + str(end_loci) + ' 5 RED omark 1 2.5 -1 (' + mfe_num + ' kcal/mol) Label";\
                 mv rna.ps ' + the_id + ".ps")
    
 # Compare sequences within a certain hamming distance 

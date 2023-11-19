@@ -24,7 +24,7 @@ module_options:
 
     # An annotation file to generate fragments from => Should be filtered and have sequences
     annotation_options: 
-      location: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/seq_yrna_4.gtf"
+      location: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/yRNA_2021_test.gtf"
     
     # Trim n number of bases from the 5' or 3' end during alignment
     trim5p3p:
@@ -34,7 +34,7 @@ module_options:
 
     # minimum and maximum fragment length
     min: 15
-    max: 45
+    max: 50
 
     # Run quality checking modules
     fastqc:
@@ -49,7 +49,7 @@ module_options:
 
   # P2: Second Processing Module. Dependent on P1 and S1
   P2: 
-    bool: True
+    bool: False
 
     # Annotation file for outside maps
     annotation_file: "/Users/kenminsoo/Desktop/unprocessed-annotations/testing_env/SPRMT_031323.gtf"
@@ -89,4 +89,4 @@ dir_locations:
   # Location of samples (ENSURE *.fastq.gz)
   sample_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/fastq"
   # Dir to output files
-  out_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/out_yRNA"
+  out_dir: "/Volumes/Extreme_SSD/Lung_smRNAseq-2021_BW/tRNA/out_tRNA_add"
