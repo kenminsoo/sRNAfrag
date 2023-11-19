@@ -25,7 +25,7 @@ SOFTWARE.
 ```
 
 ## Overview
-Welcome to our sRNAfrag github repo. sRNAfrag is a pipeline that analyzes small RNA fragmentation in small RNA-seq data. On this page, installation and basic usage can be found. Please consult the wiki attached to this repo for more information. 
+Welcome to our sRNAfrag github repo. sRNAfrag is a pipeline that analyzes small RNA fragmentation in small RNA-seq data. On this page, installation and basic usage can be found. Please consult the wiki attached to this repo for more information. The wiki can be found by navigating to the top bar on the github page and clicking on the "Wiki" name which has the label of the book.
 
 ## Installation & Environment
 sRNAfrag was developed with R version >4.1.3 and Python 3.10.0. It was developed on MacOS Monterey 12.2.1 M1 64GB, and tested on the same computer. 
@@ -252,3 +252,41 @@ module_options:
     sample_dir: Path to sample directory. Please give full path and ensure samples are gzipped with extension, "fastq.gz".
 
     out_dir: Path to out directory. Please give full path. Will create if doesn't exist.
+
+## Interested in Collaborating?
+
+We welcome contributions to sRNAfrag! If you have a feature or improvement you'd like to add, here's how you can initiate a pull request on GitHub:
+
+1. **Fork the Repository**: Start by forking the sRNAfrag repository to your own GitHub account.
+
+2. **Create a New Branch**: In your forked repository, create a new branch for your feature. This helps to keep different changes separate and organized.
+
+3. **Develop Your Feature**:
+   - **New Python File**: Develop your feature in a new Python file. Ensure that the code is well-commented and adheres to the project's coding standards.
+   - **README for Your Feature**: Create a README file specifically for your feature. This README should include:
+     - The purpose of the feature.
+     - Any new packages or dependencies required for your feature.
+     - An example command or usage guide demonstrating how to use the feature.
+
+4. **Test Your Code**: Before submitting a pull request, thoroughly test your code to ensure it works as expected and does not introduce any new bugs.
+
+5. **Update Documentation**: If your feature adds new functionality, update the main `README.md` or the wiki to reflect this change.
+
+6. **Create a Pull Request**:
+   - Commit your changes to your branch and push them to your forked repository.
+   - Navigate to the original sRNAfrag repository on GitHub.
+   - Click on the 'Pull Requests' tab and then the 'New Pull Request' button.
+   - Choose your fork and branch, and then submit the pull request.
+
+7. **Code Review**:
+   - Once your pull request is submitted, it will be reviewed by the repository maintainers.
+   - Engage in the review process, addressing any feedback or changes requested by the maintainers.
+
+8. **Pull Request Approval and Merge**:
+   - If your pull request is approved, the repository maintainers will merge it into the main branch of the sRNAfrag repository.
+
+9. **Celebrate Your Contribution**: Congratulations, you've successfully contributed to the sRNAfrag project!
+
+We look forward to seeing your innovative ideas and contributions to the sRNAfrag project!
+
+If you'd like to help with restructuring this project into a more organized framework (which is something I'd like to do, but do not have the ability to do on my own), please feel free to contact us. Reach out to Ken Nakatsu at knakats@emory.edu for further discussions and collaboration opportunities.
