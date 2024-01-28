@@ -24,6 +24,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## This repository is associated:
+Ken Nakatsu, Mayumi Jijiwa, Vedbar Khadka, Masaki Nasu, Youping Deng, sRNAfrag: a pipeline and suite of tools to analyze fragmentation in small RNA sequencing data, Briefings in Bioinformatics, Volume 25, Issue 1, January 2024, bbad515, https://doi.org/10.1093/bib/bbad515
+
 ## Overview
 Welcome to our sRNAfrag github repo. sRNAfrag is a pipeline that analyzes small RNA fragmentation in small RNA-seq data. On this page, installation and basic usage can be found. Please consult the wiki attached to this repo for more information. The wiki can be found by navigating to the top bar on the github page and clicking on the "Wiki" name which has the label of the book.
 
