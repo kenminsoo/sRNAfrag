@@ -258,6 +258,8 @@ module_options:
 
 ## Interested in Collaborating?
 
+Note that development will occur in another repository soon to be uploaded. Development areas are marked by (DEVELOP FLAG) and will slowly be worked on. 
+
 We welcome contributions to sRNAfrag! If you have a feature or improvement you'd like to add, here's how you can initiate a pull request on GitHub:
 
 1. **Fork the Repository**: Start by forking the sRNAfrag repository to your own GitHub account.
